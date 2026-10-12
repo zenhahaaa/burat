@@ -1,0 +1,1905 @@
+<!doctype html>
+<html lang="en">
+<head>
+<script>window.__h=location.hash;</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{margin:0}/* heart cursor */
+@media (hover: hover) and (pointer: fine) {
+  html, html * { cursor: none !important; }
+  #heart { position: fixed; left: 0; top: 0; z-index: 99999; width: 0; height: 0; pointer-events: none; opacity: 0; transition: opacity .2s; will-change: transform; contain: layout style; }
+  #heart.on { opacity: 1; }
+  #heart span { position: absolute; left: 0; top: 0; transform: translate(-50%,-50%) scale(1); font: 800 20px/1 var(--font-display, system-ui), system-ui, sans-serif; color: #fff; white-space: nowrap; text-shadow: 0 0 6px rgba(255,255,255,.7), 0 0 14px rgba(255,255,255,.35); transition: transform .15s ease; }
+  #heart.down span { transform: translate(-50%,-50%) scale(.82); }
+}
+@media not all and (hover: hover) and (pointer: fine) { #heart { display: none; } }
+</style>
+<title>Zen Profile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=Noto+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&family=Noto+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<style>
+/* Layout: two columns on desktop. Left: profile card, music card. Right: socials card. An Edit profile drawer slides in from the right. Stacks to one column on phones. Single dark look by choice. */
+:root {
+  color-scheme: dark;
+  --bg: #0b0a12;
+  --surface: #14121e;
+  --surface-2: #1c1929;
+  --line: #2a2640;
+  --fg: #ece9f5;
+  --muted: #8f89a8;
+  --accent: #ff5d8f;
+  --accent-2: #7c6cff;
+  --font-display: "Syne", "Arial Black", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-inline: 16px;
+  padding-block: 48px;
+  overflow-x: hidden;
+}
+#bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
+.shade { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at 50% 35%, transparent 0%, rgba(11,10,18,.8) 90%); pointer-events: none; }
+
+.layout { position: relative; z-index: 1; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 16px; }
+.col { display: flex; flex-direction: column; gap: 16px; flex: 0 1 340px; min-width: 0; }
+.col.side { flex-basis: 480px; }
+@media (max-width: 720px) { .col, .col.side { flex-basis: 100%; max-width: 480px; } }
+
+.panel {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transform: translateZ(0);
+  contain: layout paint;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,.45);
+}
+
+/* profile */
+.banner {
+  height: 128px;
+  background:
+    radial-gradient(circle at 20% 35%, var(--accent) 0, transparent 48%),
+    radial-gradient(circle at 85% 70%, var(--accent-2) 0, transparent 52%),
+    linear-gradient(135deg, #1b1530, #0f0d19);
+  position: relative;
+}
+.banner::after {
+  content: ""; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 4px);
+  mix-blend-mode: overlay;
+}
+.avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  margin: -40px 0 0 20px;
+  background: conic-gradient(from 210deg, var(--accent), var(--accent-2), var(--accent));
+  display: grid; place-items: center;
+  border: 3px solid var(--surface);
+  font-family: var(--font-display); font-weight: 800; font-size: 32px; color: #fff;
+  position: relative; z-index: 1;
+}
+.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.avatar img[hidden], .dot[hidden] { display: none; }
+.dot { position: absolute; right: 2px; bottom: 2px; width: 18px; height: 18px; border-radius: 50%; border: 3px solid var(--surface); background: #747f8d; }
+.dot[data-status="online"] { background: #3ba55d; }
+.dot[data-status="idle"] { background: #faa81a; }
+.dot[data-status="dnd"] { background: #ed4245; }
+.body { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 6px; }
+.row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 12px; }
+.name { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -.01em; line-height: 1.15; margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.rank { font-family: var(--font-mono); font-size: 12px; color: var(--muted); flex: none; }
+.handle { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.pill {
+  align-self: flex-start; margin-top: 6px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 999px; border: 1px solid var(--accent); color: var(--fg);
+}
+.pill[hidden] { display: none; }
+.bio.typing::after { content: ""; display: inline-block; width: 2px; height: 1.05em; margin-left: 2px; vertical-align: text-bottom; background: var(--accent); animation: lblink .8s steps(1) infinite; }
+.bio { font-family: "Noto Sans", "gg sans", "Segoe UI", system-ui, sans-serif; font-weight: 400; font-size: 15px; line-height: 1.4; margin: 10px 0 0; color: var(--fg); max-width: 60ch; overflow-wrap: anywhere; white-space: pre-line; }
+
+.stats { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; }
+.stat { padding: 10px 14px; min-width: 0; }
+.stat span { display: block; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.stat b { font-family: var(--font-mono); font-weight: 500; font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.btnrow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.share {
+  width: 100%; cursor: pointer; font: inherit; font-weight: 500; font-size: 14px; color: var(--fg);
+  background: transparent; border: 1px solid var(--line); border-radius: 14px; padding: 11px 14px;
+}
+.share:hover { border-color: var(--accent); }
+
+/* music */
+.pick { display: block; text-align: center; cursor: pointer; font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border: 1px dashed var(--line); border-radius: 16px; padding: 12px 14px; }
+.pick:hover, .pick:focus-within { color: var(--fg); border-color: var(--accent); }
+.player { padding: 12px 14px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 4px 12px; align-items: center; }
+.player[hidden] { display: none; }
+.play { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); cursor: pointer; background: var(--surface-2); color: var(--fg); display: grid; place-items: center; grid-row: span 2; }
+.play:hover { border-color: var(--accent); }
+.play svg { width: 14px; height: 14px; fill: currentColor; }
+.track small { display: block; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.track { min-width: 0; }
+.track strong { display: block; font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.time { font-family: var(--font-mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { grid-column: 2 / 4; height: 5px; background: var(--line); border-radius: 5px; overflow: hidden; cursor: pointer; }
+.bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+
+/* socials */
+.socials { padding: 18px 20px 20px; }
+.socials h2 { margin: 0 0 14px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.tile { display: flex; align-items: center; gap: 12px; padding: 10px 12px; min-width: 0; color: var(--fg); text-decoration: none; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; transition: transform .15s ease, border-color .15s ease; }
+.tile:hover { border-color: var(--accent); transform: translateY(-2px); }
+.ico { flex: none; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); font-family: var(--font-mono); font-size: 12px; letter-spacing: .02em; color: var(--muted); }
+.tile:hover .ico { color: var(--accent); }
+.txt { min-width: 0; }
+.txt small { display: block; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.txt b { display: block; font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.empty { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* editor drawer */
+.scrim { position: fixed; inset: 0; z-index: 19; background: rgba(5,4,10,.62); }
+.editor {
+  position: fixed; inset: 0; z-index: 20; width: 100%;
+  background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  display: flex; flex-direction: column;
+}
+.ed-wrap { flex: 1; display: flex; min-height: 0; }
+.ed-nav { width: 220px; flex: none; padding: 16px; display: flex; flex-direction: column; gap: 6px; border-right: 1px solid var(--line); background: var(--surface); overflow-y: auto; }
+.ed-nav button { font: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; color: var(--muted); background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 10px 12px; }
+.ed-nav button:hover { color: var(--fg); }
+.ed-nav button.on { color: var(--fg); background: var(--surface-2); border-color: var(--line); }
+.tab { max-width: 720px; margin: 0 auto; }
+.tab[hidden] { display: none; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 8px; }
+.card { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.card small { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.card b { font-size: 18px; font-weight: 600; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+@media (max-width: 720px) {
+  .ed-wrap { flex-direction: column; }
+  .ed-nav { width: auto; flex-direction: row; overflow-x: auto; overflow-y: hidden; border-right: 0; border-bottom: 1px solid var(--line); padding: 10px 16px; }
+  .ed-nav button { white-space: nowrap; }
+}
+.editor[hidden], .scrim[hidden] { display: none; }
+.ed-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 20px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); border-bottom: 1px solid var(--line); }
+.ed-head h2 { margin: 0; font-family: var(--font-display); font-size: 18px; }
+.ed-body { flex: 1; min-width: 0; overflow-y: auto; padding: 24px 20px; }
+.ed-foot { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 20px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
+.sec { margin: 22px 0 10px; font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.sec:first-child { margin-top: 0; }
+.f { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; min-width: 0; }
+.f > span { font-size: 12.5px; color: var(--muted); }
+.ed-body input[type="text"], .ed-body input[type="password"], .ed-body textarea {
+  font: inherit; color: var(--fg); background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 11px; width: 100%; min-width: 0;
+}
+.ed-body textarea { min-height: 84px; resize: vertical; }
+.imgrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.prev { width: 52px; height: 52px; border-radius: 10px; object-fit: cover; background: var(--surface-2); border: 1px solid var(--line); }
+.prev.round { border-radius: 50%; }
+.prev.wide { width: 104px; height: 40px; }
+.prev[hidden] { display: none; }
+.btn { font: inherit; font-size: 13.5px; font-weight: 500; cursor: pointer; border-radius: 10px; padding: 9px 14px; color: var(--fg); background: transparent; border: 1px solid var(--line); display: inline-block; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { color: #fff; border: 0; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.small { padding: 6px 10px; font-size: 12.5px; }
+.srow { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto; gap: 8px; padding: 10px; margin-bottom: 10px; border: 1px solid var(--line); border-radius: 12px; }
+.srow .url { grid-column: 1 / -1; }
+.note { margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+.status { margin: 0; flex: 1 1 100%; font-size: 12.5px; color: var(--muted); min-height: 1.2em; }
+.avatar #decoImg { inset: -10%; width: 120%; height: 120%; border-radius: 0; z-index: 2; pointer-events: none; object-fit: contain; }
+.avatar #decoImg[hidden] { display: none; }
+.dot { z-index: 3; }
+.lbl { font-size: 13px; color: var(--muted); flex: 1 1 100px; min-width: 0; }
+#card { position: relative; }
+.cardwrap { position: relative; }
+#card.frame-glow { box-shadow: 0 0 0 1px var(--accent), 0 0 28px color-mix(in srgb, var(--accent) 55%, transparent), 0 24px 60px rgba(0,0,0,.45); }
+#card.frame-neon { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 0 18px var(--accent), 0 0 42px color-mix(in srgb, var(--accent-2) 60%, transparent); }
+#card.frame-gradient { border: 3px solid transparent; background: linear-gradient(var(--surface), var(--surface)) padding-box, linear-gradient(135deg, var(--accent), var(--accent-2)) border-box; }
+#card.frame-gold { border-color: #f5c542; box-shadow: 0 0 0 1px #f5c542, 0 0 24px rgba(245,197,66,.45), 0 24px 60px rgba(0,0,0,.45); }
+#fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
+.ed-body select { font: inherit; color: var(--fg); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; width: 100%; min-width: 0; }
+.acts { display: flex; flex-direction: column; gap: 16px; }
+.acts:empty { display: none; }
+.act { display: flex; gap: 12px; align-items: center; padding: 12px 14px; }
+.act img, .act .ph { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; flex: none; background: var(--surface-2); }
+.act .ph { display: grid; place-items: center; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.act .tx { min-width: 0; display: flex; flex-direction: column; }
+.act small { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.act b { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.act .l { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chk { flex-direction: row !important; align-items: center; gap: 10px !important; }
+.chk input { width: 18px; height: 18px; accent-color: var(--accent); }
+.lockscrim { position: fixed; inset: 0; z-index: 35; background: rgba(5,4,10,.7); }
+.lock { position: fixed; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(360px, calc(100% - 32px)); padding: 20px; display: flex; flex-direction: column; gap: 12px; background: var(--surface); }
+.lock h2 { margin: 0; font-family: var(--font-display); font-size: 18px; }
+.lock .note { margin: 0; }
+.lock input { font: inherit; color: var(--fg); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; }
+.lockbtns { display: flex; gap: 8px; }
+.lock[hidden], .lockscrim[hidden] { display: none; }
+.gear { position: fixed; z-index: 15; top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer; color: var(--fg); background: color-mix(in srgb, var(--surface) 82%, transparent); border: 1px solid var(--line); border-radius: 50%; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.gear:hover { border-color: var(--accent); color: var(--accent); }
+.gear[hidden] { display: none; }
+.gear.locked { opacity: .35; }
+.gear.locked:hover, .gear.locked:focus-visible { opacity: 1; }
+.clr { width: 64px; height: 38px; padding: 2px; cursor: pointer; background: transparent; border: 1px solid var(--line); border-radius: 10px; }
+#exportBox { width: 100%; min-height: 120px; font-family: var(--font-mono); font-size: 11px; }
+
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, .pick:focus-within, .btn:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* splash */
+#splash {
+  position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; text-align: center;
+  cursor: pointer; transition: opacity .6s ease, visibility .6s; padding-inline: 16px;
+}
+#splash::before { content: ""; position: absolute; inset: 0; z-index: -1; background: #000; }
+#splash { isolation: isolate; }
+#splash.gone { opacity: 0; visibility: hidden; pointer-events: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+#splash h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(34px, 9vw, 64px); margin: 0 0 10px; letter-spacing: -.02em; }
+#splash p { margin: 0; font-family: var(--font-mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+#splash p b { color: #fff; font-weight: 500; }
+#splash p b { font-size: 18px; font-weight: 700; letter-spacing: 0; }
+#splash p b { display: inline-block; will-change: opacity; animation: lblink 1.4s ease-in-out infinite; text-shadow: 0 0 8px rgba(255,255,255,.6), 0 0 18px rgba(255,255,255,.3); }
+@keyframes lblink { 0%, 100% { opacity: 1; } 50% { opacity: .15; } }
+@keyframes pulse { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { #splash p b { animation: none; } #splash { transition: none; } .tile { transition: none; } }
+</style>
+</head>
+<body>
+
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="shade"></div>
+
+<div id="splash" role="button" tabindex="0" aria-label="Enter profile">
+  <div>
+    <p><b>&lt;$</b></p>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="col">
+    <div class="cardwrap">
+    <article class="panel" id="card">
+      <canvas id="fx" aria-hidden="true"></canvas>
+      <div class="banner" id="banner"></div>
+      <div class="avatar" id="avatar"><span id="avatarLetter">N</span><img id="avatarImg" alt="" hidden><img id="decoImg" alt="" hidden><i class="dot" id="dot" hidden></i></div>
+      <div class="body">
+        <div class="row">
+          <h1 class="name" id="name">Zen</h1>
+          <span class="rank" id="rank">#001</span>
+        </div>
+        <div class="handle" id="handle">@zen</div>
+        <span class="pill" id="pill">Founding member</span>
+        <p class="bio" id="bio"></p>
+        <div class="stats">
+          <div class="stat"><span>Views</span><b id="views">0</b></div>
+          <div class="stat"><span>Joined</span><b id="joined">Oct 2026</b></div>
+        </div>
+      </div>
+    </article>
+    </div>
+
+    <div class="acts" id="acts"></div>
+
+    <div class="panel player" id="player" hidden>
+      <button class="play" id="play" type="button" aria-label="Play music">
+        <svg viewBox="0 0 16 16"><path id="playIcon" d="M3 1.5v13l11-6.5z"/></svg>
+      </button>
+      <div class="track">
+        <small>Now playing</small>
+        <strong id="trackName"></strong>
+      </div>
+      <span class="time" id="time">0:00</span>
+      <div class="bar" id="bar"><i id="prog"></i></div>
+    </div>
+  </div>
+
+  <div class="col side">
+    <section class="panel socials">
+      <h2>Socials</h2>
+      <div class="tiles" id="tiles"></div>
+    </section>
+  </div>
+</div>
+
+<!-- settings (owner only) -->
+<button class="gear locked" id="editBtn" type="button" aria-label="Settings" title="Settings" hidden>
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+</button>
+
+<!-- editor -->
+<div class="scrim" id="scrim" hidden></div>
+<aside class="editor" id="editor" role="dialog" aria-label="Dashboard" hidden>
+  <div class="ed-head">
+    <h2>Dashboard</h2>
+    <button class="btn small" id="edClose" type="button">View my page</button>
+  </div>
+  <div class="ed-wrap">
+    <nav class="ed-nav" aria-label="Dashboard sections">
+      <button type="button" data-go="overview">Overview</button>
+      <button type="button" data-go="profile">Profile</button>
+      <button type="button" data-go="appearance">Appearance</button>
+      <button type="button" data-go="links">Links</button>
+      <button type="button" data-go="account">Account</button>
+    </nav>
+    <div class="ed-body" id="edBody">
+      <div class="tab" data-tab="overview">
+        <p class="sec">Account overview</p>
+        <div class="cards">
+          <div class="card"><small>Profile views</small><b id="ovViews">0</b></div>
+          <div class="card"><small>Discord status</small><b id="ovStatus">Offline</b></div>
+          <div class="card"><small>Joined</small><b id="ovJoined">-</b></div>
+          <div class="card"><small>Right now</small><b id="ovAct">Nothing right now</b></div>
+        </div>
+        <p class="sec">Quick actions</p>
+        <div class="imgrow">
+          <button class="btn small" type="button" data-go="profile">Edit profile</button>
+          <button class="btn small" type="button" data-go="appearance">Change look</button>
+          <button class="btn small" type="button" data-go="links">Manage links</button>
+        </div>
+        <p class="note">Press Save at the bottom after you change anything.</p>
+      </div>
+      <div class="tab" data-tab="profile" hidden>
+    <p class="sec">Profile</p>
+    <label class="f"><span>Display name</span><input type="text" id="f_name" maxlength="40" autocomplete="off"></label>
+    <label class="f"><span>Handle</span><input type="text" id="f_handle" maxlength="40" autocomplete="off"></label>
+    <label class="f"><span>Rank tag (top right)</span><input type="text" id="f_rank" maxlength="12" autocomplete="off"></label>
+    <label class="f"><span>Badge (leave empty to hide)</span><input type="text" id="f_badge" maxlength="30" autocomplete="off"></label>
+    <label class="f"><span>Bio</span><textarea id="f_bio" maxlength="240"></textarea></label>
+    <label class="f"><span>Joined</span><input type="text" id="f_joined" maxlength="20" autocomplete="off"></label>
+
+    <p class="sec">Pictures</p>
+    <div class="imgrow">
+      <img class="prev round" id="avatarPrev" alt="" hidden>
+      <label class="btn small">Avatar image<input type="file" id="avatarFile" accept="image/*" hidden></label>
+      <button class="btn small" id="avatarClear" type="button">Remove</button>
+    </div>
+    <div class="imgrow">
+      <img class="prev wide" id="bannerPrev" alt="" hidden>
+      <label class="btn small">Banner image<input type="file" id="bannerFile" accept="image/*" hidden></label>
+      <button class="btn small" id="bannerClear" type="button">Remove</button>
+      <button class="btn small" id="bannerUse" type="button">Use Discord's</button>
+    </div>
+
+      </div>
+      <div class="tab" data-tab="appearance" hidden>
+    <p class="sec">Look</p>
+    <div class="imgrow">
+      <img class="prev round" id="decoPrev" alt="" hidden>
+      <span class="lbl">Avatar decoration</span>
+      <button class="btn small" id="decoUse" type="button">Use Discord's</button>
+      <button class="btn small" id="decoClear" type="button">Remove</button>
+    </div>
+    <label class="f chk"><input type="checkbox" id="f_act"><span>Show what I'm playing (from Discord)</span></label>
+    <label class="f"><span>Profile frame</span>
+      <select id="f_frame"><option value="none">None</option><option value="glow">Glow</option><option value="neon">Neon ring</option><option value="gradient">Gradient border</option><option value="gold">Gold</option></select>
+    </label>
+    <label class="f"><span>Profile effect</span>
+      <select id="f_effect"><option value="none">None</option><option value="sparkle">Sparkles</option><option value="snow">Snow</option><option value="rain">Rain</option><option value="embers">Embers</option><option value="hearts">Hearts</option></select>
+    </label>
+
+    <p class="sec">Theme</p>
+    <div class="imgrow" id="presets"></div>
+    <div class="imgrow">
+      <label class="f"><span>Background</span><input type="color" id="f_bg" class="clr"></label>
+      <label class="f"><span>Accent</span><input type="color" id="f_accent" class="clr"></label>
+      <label class="f"><span>Accent 2</span><input type="color" id="f_accent2" class="clr"></label>
+    </div>
+    <div class="imgrow">
+      <label class="btn small">Choose file<input type="file" id="bgFile" accept="image/*,video/*" hidden></label>
+      <button class="btn small" id="bgClear" type="button">Remove</button>
+    </div>
+    <label class="f"><span>Darken background: <b id="dimVal"></b>%</span><input type="range" id="f_dim" min="0" max="85" step="5"></label>
+    <p class="note">Pictures, GIFs and videos you choose are kept in this browser after Save.</p>
+
+      </div>
+      <div class="tab" data-tab="links" hidden>
+    <p class="sec">Socials</p>
+    <div id="srows"></div>
+    <button class="btn small" id="addSocial" type="button">+ Add social</button>
+    <datalist id="platforms">
+      <option value="Discord"><option value="Steam"><option value="Twitch"><option value="YouTube"><option value="Kick"><option value="TikTok"><option value="Instagram"><option value="X"><option value="Facebook"><option value="GitHub"><option value="Spotify"><option value="Telegram">
+    </datalist>
+
+      </div>
+      <div class="tab" data-tab="account" hidden>
+        <p class="sec">Account</p>
+        <p class="note">Signed in with Discord as <b id="acctName"></b>.</p>
+        <button class="btn small" id="signOutBtn" type="button">Sign out</button>
+    <p class="sec">Backup</p>
+    <p class="note">Copy your settings as text, for a backup.</p>
+    <button class="btn small" id="copyBtn" type="button">Copy settings</button>
+    <textarea id="exportBox" readonly hidden></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="ed-foot">
+    <button class="btn primary" id="saveBtn" type="button">Save</button>
+    <button class="btn" id="resetBtn" type="button">Reset to defaults</button>
+    <p class="status" id="status" role="status"></p>
+  </div>
+</aside>
+
+<button id="loginBtn" type="button" hidden style="position:fixed;z-index:15;top:calc(16px + env(safe-area-inset-top,0px));right:16px;padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--fg);font:500 14px var(--font-body);cursor:pointer" onclick="openDash()">Log in</button>
+<iframe id="dashFrame" title="Dashboard" hidden style="position:fixed;inset:0;width:100%;height:100%;border:0;z-index:9999;background:#0a0a0a"></iframe>
+<script type="text/html" id="dashTpl">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--bg:#0a0a0a;--s1:#121212;--s2:#1a1a1a;--line:#262626;--fg:#f4f1f7;--mut:#9a94a3;--p:#c58bf0;--pd:#3b2149;--pm:#5a3374;--ok:#3ec46d;--bad:#ff7b7b;--f:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 var(--f)}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--s2);cursor:pointer;text-decoration:none}
+.btn:hover{border-color:var(--pm)}
+.btn.pri{background:var(--pd);border-color:var(--pm)}
+.btn.pri:hover{background:var(--pm)}
+.btn.sm{width:auto;padding:8px 14px;font-size:14px}
+
+/* login */
+#login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.lcard{width:min(448px,100%);background:var(--s1);border:1px solid var(--line);border-radius:28px;padding:30px}
+.lcard h1{font-size:24px;font-weight:500;margin:18px 0 6px}
+.lcard p{margin:0 0 18px;color:var(--mut)}
+.field{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:0 14px;margin:6px 0 14px}
+.field input{flex:1;background:none;border:0;padding:13px 0;outline:0;min-width:0}
+.field:focus-within{border-color:var(--pm)}
+.or{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:13px;margin:16px 0}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+.lcard .btn{margin-bottom:12px}
+.field .pre{color:var(--mut);white-space:nowrap;margin-right:-6px}
+.opt{display:flex;align-items:center;gap:14px;width:100%;padding:15px 16px;margin-bottom:10px;border-radius:16px;border:1px solid var(--line);background:var(--s2);cursor:pointer;text-align:left}
+.opt:hover{border-color:var(--pm)}
+.rec-box{background:var(--s2);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:10px}
+.rec-box p{margin:0 0 12px;color:var(--mut)}
+.link{background:none;border:0;padding:0;color:var(--p);cursor:pointer;font:inherit}
+.link:hover{text-decoration:underline}
+.swap{text-align:center;color:var(--mut);margin:6px 0 0!important}
+#lmsg{min-height:22px;margin:4px 0 0;text-align:center;font-size:14px}
+#lmsg.err{color:var(--bad)}
+#lmsg.ok{color:var(--ok)}
+
+/* app */
+#app{display:grid;grid-template-columns:288px 1fr;min-height:100vh}
+aside{position:sticky;top:0;height:100vh;padding:16px;display:flex;flex-direction:column;gap:6px;background:var(--s1);border-right:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:500;padding:6px 10px 14px}
+.brand svg{width:30px;height:30px;color:var(--p)}
+nav{display:flex;flex-direction:column;gap:4px}
+nav button{display:flex;align-items:center;gap:12px;padding:12px 14px;border:0;border-radius:14px;background:none;color:var(--mut);cursor:pointer;text-align:left}
+nav button:hover{color:var(--fg)}
+nav button[aria-current=page]{background:var(--pd);color:var(--fg)}
+.side-bot{margin-top:auto;display:flex;flex-direction:column;gap:10px}
+.me{display:flex;align-items:center;gap:10px;padding:10px;background:var(--s2);border-radius:16px;min-width:0}
+.me img,.me i{width:38px;height:38px;border-radius:50%;object-fit:cover;background:var(--pm);flex:none}
+.me b{display:block;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me small{color:var(--mut)}
+main{padding:32px 36px 110px;max-width:1180px;width:100%}
+h2{font-size:20px;font-weight:500;margin:0 0 14px}
+h3{font-size:17px;font-weight:500;margin:0 0 4px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.card{background:linear-gradient(160deg,#3d214d,#2b1738);border:1px solid var(--pm);border-radius:20px;padding:18px 20px;min-width:0}
+.card span{font-weight:500}
+.card b{display:block;font-size:26px;font-weight:500;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card small{color:var(--mut)}
+.cols{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+.panel{background:var(--s1);border:1px solid var(--line);border-radius:20px;padding:20px;margin-bottom:20px}
+.panel>p{color:var(--mut);margin:0 0 14px}
+.meter{height:14px;border-radius:99px;background:var(--pd);overflow:hidden;margin:12px 0 16px}
+.meter i{display:block;height:100%;background:var(--p);transition:width .4s}
+.meter-row{display:flex;align-items:center;gap:14px}
+.meter-row .meter{flex:1;margin:0}
+.checks{display:flex;flex-wrap:wrap;gap:10px}
+.chk{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:99px;background:var(--s2);border:1px solid var(--line)}
+.chk svg{color:var(--mut)}
+.chk.done svg{color:var(--ok)}
+.stack{display:flex;flex-direction:column;gap:10px}
+.f{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.f>span{font-weight:500}
+.f input[type=text],.f input[type=url],.f textarea,.f select{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:11px 14px;width:100%}
+.f input:focus,.f textarea:focus,.f select:focus{border-color:var(--pm);outline:0}
+.f textarea{min-height:100px;resize:vertical}
+.f input[type=color]{width:56px;height:40px;padding:2px;border-radius:10px;border:1px solid var(--line);background:var(--bg);cursor:pointer}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.imgrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.imgrow img{height:64px;border-radius:12px;background:var(--s2);object-fit:cover}
+.imgrow img.round{width:64px;border-radius:50%}
+.imgrow img.wide{width:160px}
+.lrow{display:grid;grid-template-columns:150px 1fr 1.6fr auto;gap:10px;margin-bottom:10px}
+.lrow input{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.lrow input:focus{border-color:var(--pm);outline:0}
+.empty{color:var(--mut);padding:8px 0 16px}
+#savebar{position:fixed;right:28px;bottom:24px;display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--pm);border-radius:18px;padding:10px 10px 10px 18px;box-shadow:0 12px 40px #000a}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--s2);border:1px solid var(--line);border-radius:14px;padding:10px 18px;opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.on{opacity:1}
+#toast.err{border-color:var(--bad)}
+@media(max-width:980px){.cards{grid-template-columns:1fr 1fr}.cols{grid-template-columns:1fr}}
+@media(max-width:760px){
+ #app{grid-template-columns:1fr}
+ aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+ nav{flex-direction:row;overflow-x:auto}nav button{padding:10px 12px;white-space:nowrap}
+ .side-bot{margin-top:6px}
+ main{padding:20px 16px 110px}
+ .grid2,.lrow{grid-template-columns:1fr}
+ #savebar{left:16px;right:16px}
+}
+/* refreshed look */
+body{background:radial-gradient(900px 500px at 12% -10%,#2b1539 0,transparent 60%),radial-gradient(700px 420px at 100% 100%,#1a0f2e 0,transparent 55%),var(--bg);background-attachment:fixed}
+.lcard{box-shadow:0 0 0 1px #3b2149,0 30px 80px -24px #7a42a0aa}
+.btn{transition:background .15s,border-color .15s}
+.btn.pri{background:linear-gradient(135deg,#4d2865,#33184a)}
+.btn.pri:hover{background:linear-gradient(135deg,#613380,#43205c)}
+aside{background:#0e0e0e}
+nav button{position:relative;transition:background .15s,color .15s}
+nav button:hover{background:#171717}
+nav button[aria-current=page]{background:linear-gradient(90deg,#3d2250,#241230)}
+nav button[aria-current=page]:before{content:"";position:absolute;left:0;top:11px;bottom:11px;width:3px;border-radius:3px;background:var(--p)}
+main>section>h2{font-size:26px;margin-bottom:18px}
+.card{background:linear-gradient(160deg,#43265c,#241230);box-shadow:0 14px 32px -18px #8a4bb5}
+.card b{font-size:30px}
+.panel{background:#101010}
+.chk.done{border-color:#2c4a37}
+@media(max-width:760px){
+ nav{position:fixed;left:0;right:0;bottom:0;z-index:5;background:#0e0e0e;border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));justify-content:space-around;overflow:visible}
+ nav button{flex:1;flex-direction:column;gap:3px;padding:8px 4px;font-size:11px;white-space:normal;text-align:center}
+ nav button[aria-current=page]:before{left:30%;right:30%;top:0;bottom:auto;width:auto;height:3px}
+ main{padding-bottom:160px}
+ #savebar{bottom:84px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="gun" viewBox="0 0 24 24" fill="currentColor"><path d="M3 5h15l3 2v4h-6l-2 3v5h-4v-5L9 11H3z"/></symbol>
+<symbol id="grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+<symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+<symbol id="brush" viewBox="0 0 24 24"><path d="m9 12 8-8a3 3 0 0 1 4 4l-8 8"/><path d="M7 15c-1.7 0-3 1.3-3 3 0 1.3-2.5 1.5-2 2 1 1 2.5 2 4 2a4 4 0 0 0 4-4 3 3 0 0 0-3-3z"/></symbol>
+<symbol id="link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></symbol>
+<symbol id="gear" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+<symbol id="ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+<symbol id="yes" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"/><path d="m8 12 3 3 5-6" stroke="#0a0a0a"/></symbol>
+<symbol id="no" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></symbol>
+<symbol id="key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M16 7l3 3"/></symbol>
+<symbol id="help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/></symbol>
+<symbol id="shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></symbol>
+<symbol id="mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+</svg>
+
+<section id="login" hidden>
+  <div class="lcard">
+    <svg class="i" style="width:44px;height:44px;color:var(--p)" aria-hidden="true"><use href="#gun"/></svg>
+    <div id="vNew" hidden>
+      <h1>Create your account</h1>
+      <p>Build your profile, share your links, and customize everything in one place.</p>
+      <label for="uname" style="font-weight:500">Username</label>
+      <div class="field"><svg class="i" aria-hidden="true" style="color:var(--mut)"><use href="#user"/></svg><span class="pre" id="uhost"></span><input id="uname" type="text" placeholder="username" maxlength="20" autocomplete="username" autocapitalize="off" spellcheck="false"></div>
+      <button class="btn pri" id="goNew" type="button">Continue</button>
+      <p class="swap">Already have an account? <button class="link" id="toIn" type="button">Sign in</button></p>
+    </div>
+    <div id="vIn">
+    <h1 id="inTitle">Log in to your account</h1>
+    <p id="inSub">Open your dashboard to edit your profile, links and look.</p>
+    <label for="email" style="font-weight:500">Email</label>
+    <div class="field"><svg class="i" aria-hidden="true" style="color:var(--mut)"><use href="#mail"/></svg><input id="email" type="email" placeholder="Your email address" autocomplete="email"></div>
+    <button class="btn pri" id="goMail" type="button">Log in</button>
+    <div class="or">OR</div>
+    <button class="btn" id="goGoogle" type="button">Continue with Google</button>
+    <button class="btn" id="goDiscord" type="button">Continue with Discord</button>
+    <p class="swap">Lost account access? <button class="link" id="toRec" type="button">Recover account</button></p>
+    <p class="swap">New here? <button class="link" id="toNew" type="button">Create an account</button></p>
+    </div>
+    <div id="vRec" hidden>
+      <h1>Recover your account</h1>
+      <p>Experiencing trouble logging in? Select an issue below to start the recovery process.</p>
+      <div id="recList">
+        <button class="opt" type="button" data-r="link"><svg class="i"><use href="#key"/></svg>Can't log in</button>
+        <button class="opt" type="button" data-r="email"><svg class="i"><use href="#mail"/></svg>Lost access to email</button>
+        <button class="opt" type="button" data-r="forgot"><svg class="i"><use href="#help"/></svg>Forgot email</button>
+        <button class="opt" type="button" data-r="hacked"><svg class="i"><use href="#shield"/></svg>My account was hacked</button>
+      </div>
+      <div class="rec-box" id="recBox" hidden>
+        <p id="recText"></p>
+        <div id="recMail" hidden>
+          <div class="field" style="margin-top:0"><svg class="i" aria-hidden="true" style="color:var(--mut)"><use href="#mail"/></svg><input id="recEmail" type="email" placeholder="Your email address" autocomplete="email"></div>
+          <button class="btn pri" id="recSend" type="button" style="margin-bottom:0">Send login link</button>
+        </div>
+        <div id="recAlt" hidden class="stack">
+          <button class="btn" id="recDiscord" type="button">Continue with Discord</button>
+          <button class="btn" id="recGoogle" type="button">Continue with Google</button>
+        </div>
+      </div>
+      <p class="swap">Remembered it? <button class="link" id="recBack" type="button">Back to log in</button></p>
+    </div>
+    <p id="lmsg" role="status"></p>
+  </div>
+</section>
+
+<div id="app" hidden>
+  <aside>
+    <div class="brand"><svg class="i" aria-hidden="true"><use href="#gun"/></svg>Dashboard</div>
+    <nav aria-label="Dashboard sections">
+      <button type="button" data-go="overview"><svg class="i"><use href="#grid"/></svg>Overview</button>
+      <button type="button" data-go="profile"><svg class="i"><use href="#user"/></svg>Profile</button>
+      <button type="button" data-go="customize"><svg class="i"><use href="#brush"/></svg>Customize</button>
+      <button type="button" data-go="links"><svg class="i"><use href="#link"/></svg>Links</button>
+      <button type="button" data-go="settings"><svg class="i"><use href="#gear"/></svg>Settings</button>
+    </nav>
+    <div class="side-bot">
+      <button class="btn pri" id="myPage" type="button"><svg class="i"><use href="#ext"/></svg>My page</button>
+      <div class="me"><i id="meImg"></i><div style="min-width:0"><b id="meName">Your profile</b><small id="meHandle"></small></div></div>
+    </div>
+  </aside>
+
+  <main>
+    <section data-tab="overview">
+      <h2>Account overview</h2>
+      <div class="cards">
+        <div class="card"><span>Display name</span><b id="cName">-</b><small>Shown on your page</small></div>
+        <div class="card"><span>Handle</span><b id="cHandle">-</b><small>Under your name</small></div>
+        <div class="card"><span>Rank tag</span><b id="cRank">-</b><small>Top right of your card</small></div>
+        <div class="card"><span>Profile views</span><b id="cViews">0</b><small>All time</small></div>
+      </div>
+      <div class="cols">
+        <div class="panel">
+          <h3>Profile completion</h3>
+          <div class="meter-row"><div class="meter"><i id="bar" style="width:0"></i></div><span id="pct">0%</span></div>
+          <div class="checks" id="checks"></div>
+        </div>
+        <div class="panel">
+          <h3>Manage your profile</h3>
+          <p>Change your details, look and links.</p>
+          <div class="stack">
+            <button class="btn" type="button" data-go="profile">Edit profile</button>
+            <button class="btn" type="button" data-go="customize">Customize look</button>
+            <button class="btn" type="button" data-go="links">Manage links</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section data-tab="profile" hidden>
+      <h2>Profile</h2>
+      <div class="panel">
+        <div class="grid2">
+          <label class="f"><span>Display name</span><input type="text" data-k="name" maxlength="40" autocomplete="off"></label>
+          <label class="f"><span>Handle</span><input type="text" data-k="handle" maxlength="40" autocomplete="off"></label>
+          <label class="f"><span>Rank tag</span><input type="text" data-k="rank" maxlength="12" autocomplete="off"></label>
+          <label class="f"><span>Badge (empty hides it)</span><input type="text" data-k="badge" maxlength="30" autocomplete="off"></label>
+        </div>
+        <label class="f"><span>Bio</span><textarea data-k="bio" maxlength="240"></textarea></label>
+        <label class="f" style="max-width:260px"><span>Joined</span><input type="text" data-k="joined" maxlength="20" autocomplete="off"></label>
+      </div>
+      <div class="panel">
+        <h3>Pictures</h3>
+        <p>Uploads are resized so they stay small.</p>
+        <div class="imgrow">
+          <img class="round" id="avPrev" alt="" hidden>
+          <label class="btn sm" style="cursor:pointer">Upload avatar<input type="file" accept="image/*" data-img="avatar" hidden></label>
+          <button class="btn sm" type="button" data-clear="avatar">Remove</button>
+        </div>
+        <div class="imgrow">
+          <img class="wide" id="bnPrev" alt="" hidden>
+          <label class="btn sm" style="cursor:pointer">Upload banner<input type="file" accept="image/*" data-img="banner" hidden></label>
+          <button class="btn sm" type="button" data-clear="banner">Remove</button>
+        </div>
+      </div>
+    </section>
+
+    <section data-tab="customize" hidden>
+      <h2>Customize</h2>
+      <div class="panel">
+        <h3>Colors</h3>
+        <div class="imgrow" style="margin-top:12px">
+          <label class="f" style="margin:0"><span>Accent</span><input type="color" data-k="accent" data-d="#ff5d8f"></label>
+          <label class="f" style="margin:0"><span>Accent 2</span><input type="color" data-k="accent2" data-d="#7c6cff"></label>
+          <label class="f" style="margin:0"><span>Background</span><input type="color" data-k="bg" data-d="#0b0a12"></label>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="grid2">
+          <label class="f"><span>Profile frame</span>
+            <select data-k="frame"><option value="none">None</option><option value="glow">Glow</option><option value="neon">Neon ring</option><option value="gradient">Gradient border</option><option value="gold">Gold</option></select></label>
+          <label class="f"><span>Profile effect</span>
+            <select data-k="effect"><option value="none">None</option><option value="sparkle">Sparkles</option><option value="snow">Snow</option><option value="rain">Rain</option><option value="embers">Embers</option><option value="hearts">Hearts</option></select></label>
+        </div>
+        <label style="display:flex;gap:10px;align-items:center"><input type="checkbox" data-k="showActivity"> Show what I'm playing from Discord</label>
+      </div>
+      <div class="panel">
+        <h3>Background</h3>
+        <p>Image, GIF or video behind your profile.</p>
+        <div class="imgrow">
+          <label class="btn sm" style="cursor:pointer">Choose file<input type="file" id="bgFile" accept="image/*,video/*" hidden></label>
+          <button class="btn sm" type="button" id="bgClear">Remove</button>
+          <span id="bgInfo" style="color:var(--mut)"></span>
+        </div>
+        <label class="f"><span>Or type a link / file name (works on every device)</span><input id="bgLink" type="text" placeholder="e.g. mybg.gif (uploaded next to index.html) or https://..." autocomplete="off"></label>
+        <div id="bgBox" hidden style="aspect-ratio:16/9;max-width:420px;border-radius:14px;overflow:hidden;background:#000;margin-bottom:14px;border:1px solid var(--line)"></div>
+        <label class="f" hidden><span>Fit</span>
+          <select data-k="bgfit" data-d="cover"><option value="cover">Fill the screen</option><option value="contain">Show the whole picture</option></select></label>
+        <label class="f"><span>Move left / right: <b id="xVal">50</b>%</span><input type="range" min="0" max="100" data-k="bgx" data-d="50"></label>
+        <label class="f"><span>Move up / down: <b id="yVal">50</b>%</span><input type="range" min="0" max="100" data-k="bgy" data-d="50"></label>
+        <label class="f"><span>Size: <b id="zVal">100</b>%</span><input type="range" min="25" max="300" data-k="bgzoom" data-d="100"></label>
+        <div class="imgrow"><button class="btn sm" type="button" id="bgReset">Reset size and position</button></div>
+        <label class="f"><span>Darken background: <b id="dimVal">40</b>%</span><input type="range" min="0" max="100" data-k="bgdim" data-d="40"></label>
+        <p style="margin:0;font-size:13px">Images sync to all devices. GIFs and videos stay in this browser only.</p>
+      </div>
+      <div class="panel">
+        <h3>Music</h3>
+        <p>Upload an mp3 (up to 20 MB). It plays when visitors enter your page.</p>
+        <div class="imgrow">
+          <label class="btn sm" style="cursor:pointer">Upload mp3<input type="file" accept="audio/*,.mp3" id="audioFile" hidden></label>
+          <button class="btn sm" type="button" id="audioClear">Remove</button>
+          <span id="musicInfo" style="color:var(--mut)"></span>
+        </div>
+        <label class="f"><span>Song title</span><input type="text" data-k="musicTitle" maxlength="60" placeholder="Shown in the player" autocomplete="off"></label>
+      </div>
+    </section>
+
+    <section data-tab="links" hidden>
+      <h2>Links</h2>
+      <div class="panel">
+        <p>Name, handle and full link for each social tile.</p>
+        <div id="rows"></div>
+        <button class="btn sm" id="addLink" type="button">Add link</button>
+      </div>
+    </section>
+
+    <section data-tab="settings" hidden>
+      <h2>Settings</h2>
+      <div class="panel" style="max-width:480px">
+        <h3>Account</h3>
+        <p>You are logged in as the owner of this profile.</p>
+        <div class="stack">
+          <button class="btn" id="copyLink" type="button">Copy page link</button>
+          <button class="btn" id="out" type="button">Log out</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="savebar" hidden><span>Unsaved changes</span><button class="btn pri sm" id="save" type="button">Save changes</button></div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $=id=>document.getElementById(id),Q=s=>[...document.querySelectorAll(s)];
+// Same backend and sign-in as the profile page above.
+const SB="https://coanrfbbuomozstyquxr.supabase.co",KEY="sb_publishable_RGbXFE_zJcs8DsJZXpZ6QQ_fa9tNfI6",SKEY="profile-session";
+const H=t=>Object.assign({apikey:KEY,"Content-Type":"application/json"},t?{Authorization:"Bearer "+t}:{});
+let data={},views=0,session=null,dirty=false;
+try{session=JSON.parse(localStorage.getItem(SKEY)||"null")}catch(e){}
+const store=x=>{session=x;try{x?localStorage.setItem(SKEY,JSON.stringify(x)):localStorage.removeItem(SKEY)}catch(e){}};
+
+function toast(t,err){const e=$("toast");e.textContent=t;e.className="on"+(err?" err":"");clearTimeout(toast.t);toast.t=setTimeout(()=>e.className="",3200)}
+function lmsg(t,cls){const e=$("lmsg");e.textContent=t||"";e.className=cls||""}
+const P=parent.location,here=()=>P.origin+P.pathname;
+let saved=false,mediaChanged=false,bgLocal=false,bgUrl="",bgType="";
+
+/* ---- auth ---- */
+const jwtExp=t=>{try{return JSON.parse(atob(t.split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))).exp*1000}catch(e){return 0}};
+async function freshToken(){
+  if(!session||!session.access)return null;
+  if(jwtExp(session.access)>Date.now()+60000)return session.access;
+  try{
+    const r=await fetch(SB+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:H(),body:JSON.stringify({refresh_token:session.refresh})});
+    const j=await r.json();
+    if(j.access_token){store({access:j.access_token,refresh:j.refresh_token,ptoken:session.ptoken});return j.access_token}
+    if(r.status>=400&&r.status<500)store(null);
+  }catch(e){}
+  return null;
+}
+async function isOwner(){
+  const t=await freshToken();if(!t)return false;
+  try{const r=await fetch(SB+"/rest/v1/rpc/is_owner",{method:"POST",headers:H(t),body:"{}"});return(await r.json())===true}catch(e){return null}
+}
+const want=()=>{try{localStorage.setItem("dash-want","1")}catch(e){}};
+const oauth=p=>{want();parent.location.href=SB+"/auth/v1/authorize?provider="+p+(p==="discord"?"&scopes=guilds":"")+"&redirect_to="+encodeURIComponent(here())};
+$("goDiscord").onclick=()=>oauth("discord");
+$("goGoogle").onclick=()=>oauth("google");
+$("goMail").onclick=async()=>{
+  const email=$("email").value.trim();
+  if(!/^\S+@\S+\.\S+$/.test(email))return lmsg("Enter a valid email address.","err");
+  lmsg("Sending your login link...");want();
+  try{
+    const r=await fetch(SB+"/auth/v1/otp?redirect_to="+encodeURIComponent(here()),{method:"POST",headers:H(),body:JSON.stringify({email,create_user:true})});
+    if(r.ok)lmsg("Check your inbox. The link logs you in, and creates your account if you are new.","ok");
+    else{let m="";try{m=(await r.json()).msg||""}catch(e){}lmsg(m||"Could not send the link. Try again in a minute.","err")}
+  }catch(e){lmsg("Could not reach the server. Try again.","err")}
+};
+$("email").addEventListener("keydown",e=>{if(e.key==="Enter")$("goMail").click()});
+$("out").onclick=()=>{store(null);parent.location.reload()};
+
+/* ---- create account / sign in switch ---- */
+const pend=v=>{try{if(v===undefined)return localStorage.getItem("pend-user")||"";v?localStorage.setItem("pend-user",v):localStorage.removeItem("pend-user")}catch(e){return ""}};
+function inMode(){
+  const u=pend();
+  $("inTitle").textContent=u?"Finish creating your account":"Log in to your account";
+  $("inSub").textContent=u?"Choose how you want to log in as @"+u+".":"Open your dashboard to edit your profile, links and look.";
+}
+const view=n=>{$("vNew").hidden=n!=="new";$("vIn").hidden=n!=="in";$("vRec").hidden=n!=="rec";$("recBox").hidden=true;lmsg("")};
+$("toRec").onclick=()=>view("rec");
+$("recBack").onclick=()=>{inMode();view("in")};
+const REC={
+  link:["We don't use passwords. Enter your email and we will send you a link that logs you straight in.","mail"],
+  email:["If you can't open that email, log in with Discord or Google instead. They don't need your email.","alt"],
+  forgot:["Not sure which email you used? Try Discord or Google. If your owner account was made with Discord, that is the one to use.","alt"],
+  hacked:["Change your Discord or Google password and log out of your other devices first. Then log in below. To remove sessions or the account itself, open your Supabase project and go to Authentication, then Users.","alt"]
+};
+document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{
+  const r=REC[b.dataset.r];
+  $("recText").textContent=r[0];$("recMail").hidden=r[1]!=="mail";$("recAlt").hidden=r[1]!=="alt";
+  $("recBox").hidden=false;lmsg("");
+});
+$("recDiscord").onclick=()=>$("goDiscord").click();
+$("recGoogle").onclick=()=>$("goGoogle").click();
+$("recSend").onclick=async()=>{
+  const email=$("recEmail").value.trim();
+  if(!/^\S+@\S+\.\S+$/.test(email))return lmsg("Enter a valid email address.","err");
+  lmsg("Sending your login link...");want();
+  try{
+    const r=await fetch(SB+"/auth/v1/otp?redirect_to="+encodeURIComponent(here()),{method:"POST",headers:H(),body:JSON.stringify({email,create_user:false})});
+    if(r.ok)lmsg("Check your inbox for the login link.","ok");
+    else{let m="";try{m=(await r.json()).msg||""}catch(e){}lmsg(m||"No account found for that email.","err")}
+  }catch(e){lmsg("Could not reach the server. Try again.","err")}
+};
+$("uhost").textContent=P.host+"/";
+$("toNew").onclick=()=>{pend("");view("new")};
+$("toIn").onclick=()=>{pend("");inMode();view("in")};
+$("goNew").onclick=()=>{
+  const u=$("uname").value.trim().toLowerCase();
+  if(!/^[a-z0-9._]{3,20}$/.test(u))return lmsg("Username must be 3-20 letters, numbers, dots or underscores.","err");
+  pend(u);inMode();view("in");
+};
+$("uname").addEventListener("keydown",e=>{if(e.key==="Enter")$("goNew").click()});
+
+/* ---- data ---- */
+async function load(){
+  const r=await fetch(SB+"/rest/v1/profile?id=eq.1&select=data,views",{headers:H()});
+  const rows=await r.json();
+  if(rows&&rows[0]){data=rows[0].data||{};views=Number(rows[0].views)||0}
+}
+async function save(){
+  const t=await freshToken();if(!t)return toast("Your session ended. Log in again.",1);
+  data.socials=(data.socials||[]).filter(s=>(s.url||"").trim()||(s.handle||"").trim());
+  $("save").disabled=true;
+  try{
+    const r=await fetch(SB+"/rest/v1/rpc/save_profile",{method:"POST",headers:H(t),body:JSON.stringify({d:data})});
+    if((await r.json())===true){dirty=false;saved=true;toast("Changes saved");paint()}
+    else toast("Could not save. This account may not be allowed to edit.",1);
+  }catch(e){toast("Could not reach the server. Your edits are still here.",1)}
+  $("save").disabled=false;
+}
+$("save").onclick=save;
+addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue=""}});
+const touch=()=>{dirty=true;paint()};
+
+/* ---- binding ---- */
+Q("[data-k]").forEach(el=>{
+  const k=el.dataset.k;
+  el.addEventListener("input",()=>{data[k]=el.type==="checkbox"?el.checked:el.value;touch()});
+});
+function fill(){
+  Q("[data-k]").forEach(el=>{
+    const v=data[el.dataset.k];
+    if(el.type==="checkbox")el.checked=v!==false;
+    else el.value=v!==undefined&&v!==null?v:(el.dataset.d||(el.tagName==="SELECT"?"none":""));
+  });
+}
+function resize(file,max,k){
+  const r=new FileReader();
+  r.onload=()=>{const i=new Image();i.onload=()=>{
+    const s=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement("canvas");
+    c.width=Math.round(i.width*s);c.height=Math.round(i.height*s);
+    c.getContext("2d").drawImage(i,0,0,c.width,c.height);
+    data[k]=c.toDataURL("image/jpeg",.82);touch();
+  };i.onerror=()=>toast("That file is not a readable image.",1);i.src=r.result};
+  r.readAsDataURL(file);
+}
+Q("[data-img]").forEach(el=>el.addEventListener("change",()=>{const f=el.files[0];if(f)resize(f,el.dataset.img==="avatar"?256:900,el.dataset.img);el.value=""}));
+Q("[data-clear]").forEach(b=>b.onclick=()=>{data[b.dataset.clear]="";touch()});
+
+$("audioFile").addEventListener("change",e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  if(f.size>20*1024*1024)return toast("That file is over 20 MB. Pick a shorter or smaller mp3.",1);
+  const r=new FileReader();
+  r.onload=()=>{
+    data.music=String(r.result).replace(/^data:[^;,]*/,"data:audio/mpeg");
+    data.musicTitle=f.name.replace(/\.[^.]+$/,"").slice(0,60);
+    fill();touch();
+  };
+  r.onerror=()=>toast("Could not read that file.",1);
+  r.readAsDataURL(f);
+});
+$("audioClear").onclick=()=>{data.music="";data.musicTitle="";fill();touch()};
+function idb(){return new Promise((ok,no)=>{try{const r=indexedDB.open("profile-media",1);r.onupgradeneeded=()=>r.result.createObjectStore("files");r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}catch(e){no(e)}})}
+async function idbSet(k,v){try{const d=await idb();d.transaction("files","readwrite").objectStore("files").put(v,k)}catch(e){}}
+async function idbDel(k){try{const d=await idb();d.transaction("files","readwrite").objectStore("files").delete(k)}catch(e){}}
+async function idbGet(k){try{const d=await idb();return await new Promise(ok=>{const q=d.transaction("files").objectStore("files").get(k);q.onsuccess=()=>ok(q.result);q.onerror=()=>ok(null)})}catch(e){return null}}
+$("bgFile").addEventListener("change",e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  const gif=f.type==="image/gif",vid=f.type.startsWith("video/")||/\.(mp4|webm|mov|m4v|ogv)$/i.test(f.name);
+  if(gif||vid){
+    const ext=gif?"gif":((f.name.match(/\.(mp4|webm|mov|m4v|ogv)$/i)||[,"mp4"])[1]).toLowerCase();
+    const keepLocal=why=>{
+      data.bgmedia="";bgLocal=true;mediaChanged=true;
+      const bl=new Blob([f],{type:gif?"image/gif":(f.type||"video/mp4")});
+      idbSet("bg",{blob:bl,type:vid?"video":"image"});bgUrl=URL.createObjectURL(bl);bgType=vid?"video":"image";
+      toast(why+" Kept in this browser only.",1);touch();
+    };
+    if(f.size>50*1024*1024)return keepLocal("That file is over 50 MB.");
+    toast("Uploading to your site storage... keep this open");
+    (async()=>{
+      const t=await freshToken();if(!t)throw new Error("signed out");
+      const name="bg-"+Date.now()+"."+ext;
+      const r=await fetch(SB+"/storage/v1/object/media/"+name,{method:"POST",headers:{apikey:KEY,Authorization:"Bearer "+t,"Content-Type":gif?"image/gif":(f.type||"video/mp4"),"x-upsert":"true"},body:f});
+      if(!r.ok){let m="";try{m=(await r.json()).message||""}catch(e){}throw new Error(m||("error "+r.status))}
+      data.bgmedia=SB+"/storage/v1/object/public/media/"+name;bgLocal=false;bgUrl="";mediaChanged=true;idbDel("bg");
+      toast("Uploaded. Press Save to sync it to all devices.");touch();
+    })().catch(err=>keepLocal("Upload failed ("+err.message+"). Run storage.sql in Supabase."));
+  }else if(f.type.startsWith("image/")){bgLocal=false;bgUrl="";mediaChanged=true;idbDel("bg");resize(f,1600,"bgmedia")}
+  else toast("Pick an image, GIF or video.",1);
+});
+$("bgLink").oninput=()=>{const v=$("bgLink").value.trim();data.bgmedia=v;bgLocal=false;bgUrl="";mediaChanged=true;idbDel("bg");touch()};
+$("bgClear").onclick=()=>{$("bgLink").value="";data.bgmedia="";bgLocal=false;bgUrl="";mediaChanged=true;idbDel("bg");touch()};
+idbGet("bg").then(m=>{bgLocal=!!(m&&m.blob);if(bgLocal){bgUrl=URL.createObjectURL(m.blob);bgType=m.type||"video"}paint()});
+$("bgReset").onclick=()=>{data.bgx=50;data.bgy=50;data.bgzoom=100;data.bgfit="cover";fill();touch()};
+const num=(v,d)=>v===undefined||v===""||isNaN(v)?d:Number(v);
+function prevBg(){
+  const box=$("bgBox"),url=data.bgmedia||bgUrl;
+  if(!url){box.hidden=true;box.textContent="";return}
+  box.hidden=false;
+  const tag=(!data.bgmedia&&bgType==="video")||(data.bgmedia&&/\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(data.bgmedia))?"VIDEO":"IMG";
+  let el=box.firstChild;
+  if(!el||el.tagName!==tag){
+    box.textContent="";el=document.createElement(tag.toLowerCase());el.style.cssText="width:100%;height:100%;object-fit:cover;display:block";
+    if(tag==="VIDEO"){el.muted=true;el.loop=true;el.autoplay=true;el.playsInline=true}else el.alt="";
+    box.append(el);
+  }
+  if(el.getAttribute("src")!==url){el.src=url;if(tag==="VIDEO")el.play().catch(()=>{})}
+  const x=num(data.bgx,50),y=num(data.bgy,50),z=num(data.bgzoom,100),d=num(data.bgdim,40);
+  el.style.objectFit="cover";el.style.objectPosition=x+"% "+y+"%";el.style.transformOrigin=x+"% "+y+"%";
+  el.style.transform="scale("+z/100+")";el.style.filter="brightness("+(1-d/100)+")";
+}
+
+/* ---- links ---- */
+function rows(){
+  const w=$("rows");w.textContent="";
+  const list=data.socials||[];
+  if(!list.length){const p=document.createElement("p");p.className="empty";p.textContent="No links yet. Add your first one.";w.append(p)}
+  list.forEach((s,i)=>{
+    const r=document.createElement("div");r.className="lrow";
+    [["label","Name (Discord)"],["handle","Handle (@you)"],["url","https://..."]].forEach(([k,ph])=>{
+      const inp=document.createElement("input");inp.type="text";inp.value=s[k]||"";inp.placeholder=ph;inp.setAttribute("aria-label",ph);
+      inp.oninput=()=>{s[k]=inp.value;dirty=true;paint(true)};r.append(inp);
+    });
+    const d=document.createElement("button");d.className="btn sm";d.type="button";d.textContent="Remove";
+    d.onclick=()=>{list.splice(i,1);touch();rows()};r.append(d);w.append(r);
+  });
+}
+$("addLink").onclick=()=>{(data.socials=data.socials||[]).push({label:"",handle:"",url:""});rows();touch()};
+
+/* ---- paint ---- */
+function paint(light){
+  $("cName").textContent=data.name||"-";
+  $("cHandle").textContent=data.handle||"-";
+  $("cRank").textContent=data.rank||"-";
+  $("cViews").textContent=views.toLocaleString();
+  $("meName").textContent=data.name||"Your profile";
+  $("meHandle").textContent=data.handle||"";
+  const m=$("meImg");
+  if(data.avatar){m.outerHTML='<img id="meImg" alt="">';$("meImg").src=data.avatar}
+  const set=(id,v)=>{const e=$(id);if(v){e.src=v;e.hidden=false}else e.hidden=true};
+  set("avPrev",data.avatar);set("bnPrev",data.banner);
+  const items=[["Upload an avatar",!!data.avatar],["Add a description",!!(data.bio||"").trim()],["Add a banner",!!data.banner],["Add a social link",(data.socials||[]).some(s=>(s.url||"").trim())],["Reach 10 profile views",views>=10]];
+  const n=items.filter(x=>x[1]).length,pct=Math.round(n/items.length*100);
+  $("bar").style.width=pct+"%";$("pct").textContent=pct+"%";
+  const c=$("checks");c.textContent="";
+  items.forEach(([t,ok])=>{const d=document.createElement("div");d.className="chk"+(ok?" done":"");
+    d.innerHTML='<svg class="i"><use href="#'+(ok?"yes":"no")+'"/></svg>';d.append(t);c.append(d)});
+  $("musicInfo").textContent=data.music?"Song uploaded":"No song yet";
+  if(document.activeElement!==$("bgLink"))$("bgLink").value=data.bgmedia&&!data.bgmedia.startsWith("data:")?data.bgmedia:"";
+  $("bgInfo").textContent=data.bgmedia?(data.bgmedia.startsWith("data:")?"Image set":"Link set (every device)"):(bgLocal?"GIF or video set (this browser only)":"No background yet");
+  $("dimVal").textContent=num(data.bgdim,40);$("xVal").textContent=num(data.bgx,50);$("yVal").textContent=num(data.bgy,50);$("zVal").textContent=num(data.bgzoom,100);
+  prevBg();
+  $("savebar").hidden=!dirty;
+}
+
+/* ---- tabs ---- */
+function go(name){
+  Q("[data-tab]").forEach(s=>s.hidden=s.dataset.tab!==name);
+  Q("nav [data-go]").forEach(b=>b.getAttribute("data-go")===name?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
+  scrollTo(0,0);
+}
+Q("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
+$("copyLink").onclick=async()=>{
+  const u=P.origin+P.pathname;
+  try{await navigator.clipboard.writeText(u);toast("Link copied")}catch(e){toast(u)}
+};
+
+$("myPage").onclick=()=>parent.closeDash(saved||mediaChanged);
+/* ---- boot ---- */
+async function boot(){
+  const h=parent.__h||"",q=new URLSearchParams(h.slice(1));parent.__h="";
+  let err="";
+  if(q.get("access_token"))store({access:q.get("access_token"),refresh:q.get("refresh_token"),ptoken:q.get("provider_token")||""});
+  else if(q.get("error_description"))err=q.get("error_description").replace(/\+/g," ");
+  if(session){
+    const ok=await isOwner();
+    if(ok===true){
+      try{await load()}catch(e){}
+      const pu=pend();if(pu){pend("");if(!data.handle){data.handle="@"+pu;dirty=true}}
+      fill();rows();paint();
+      $("app").hidden=false;go("profile");return;
+    }
+    if(ok===false){store(null);err="This account is not allowed to edit this profile."}
+    else err="Could not reach the server. Reload to try again.";
+  }
+  $("login").hidden=false;inMode();lmsg(err,err?"err":"");
+}
+boot();
+<\/script>
+</body>
+</html>
+
+</script>
+<script>
+const $ = id => document.getElementById(id);
+
+// ---- Defaults. Edit here, or use the Edit profile button on the page. ----
+const BUILTIN = {
+  name: "Zen",
+  handle: "@zen",
+  rank: "#001",
+  badge: "Founding member",
+  bio: "Late-night ranked grinder. Clips, setups and good music.",
+  joined: "Oct 2026",
+  avatar: "",
+  banner: "",
+  bg: "#0b0a12",
+  accent: "#ff5d8f",
+  accent2: "#7c6cff",
+  bgmedia: "",
+  bgdim: 40,
+  decoration: "",
+  frame: "none",
+  showActivity: true,
+  effect: "none",
+  socials: [
+    { label: "Discord", handle: "@yourname", url: "https://discord.com" },
+    { label: "Steam", handle: "yourname", url: "https://steamcommunity.com" },
+    { label: "Twitch", handle: "yourname", url: "https://www.twitch.tv/yourname" },
+    { label: "YouTube", handle: "@yourname", url: "https://www.youtube.com/@yourname" },
+    { label: "Kick", handle: "yourname", url: "https://kick.com/yourname" },
+    { label: "TikTok", handle: "@yourname", url: "https://www.tiktok.com/@yourname" }
+  ]
+};
+// Paste the settings copied from the editor here to make your edits show for everyone.
+const PUBLISHED = {};
+// Your numeric Discord user ID: fills in your Discord name, @username, avatar and online status.
+const DISCORD_ID = "431045014357934090";
+// Optional: link to an mp3 on your own host. Leave empty to choose a file yourself.
+const MUSIC_URL = "";
+// Sync across devices (see setup steps). Leave both empty to keep edits in this browser only.
+const SUPABASE_URL = "https://coanrfbbuomozstyquxr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_RGbXFE_zJcs8DsJZXpZ6QQ_fa9tNfI6";
+const SYNC = !!(SUPABASE_URL && SUPABASE_KEY);
+// Your Discord server ID. Editing only works while your Discord account is a member of it.
+// Leave empty to turn this check off. (Discord: Developer Mode on, right-click the server, Copy Server ID.)
+const DISCORD_SERVER_ID = "549427489466875917";
+const cget = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const cset = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+let remote = cget("profile-remote-cache") || {};
+
+// ---- state ----
+const STORE = "profile-edits-v1";
+let edits = {};
+try { edits = JSON.parse(localStorage.getItem(STORE) || "{}") || {}; } catch (e) { edits = {}; }
+let disc = cget("profile-disc-cache"); // Discord profile, when connected
+let lastPresence = null; // latest Discord status, for the activity cards
+const base = () => Object.assign({}, BUILTIN, disc || {}, PUBLISHED, remote);
+const val = k => edits[k] !== undefined ? edits[k] : base()[k];
+function persist() {
+  try {
+    if (Object.keys(edits).length) localStorage.setItem(STORE, JSON.stringify(edits));
+    else localStorage.removeItem(STORE);
+    return true;
+  } catch (e) { return false; }
+}
+
+const MARKS = { discord: "DC", steam: "ST", twitch: "TW", youtube: "YT", kick: "KK", tiktok: "TT", instagram: "IG", x: "X", twitter: "X", facebook: "FB", github: "GH", spotify: "SP", telegram: "TG" };
+const LOGOS = {"discord": "M19.27 5.33A16.5 16.5 0 0 0 15.2 4.1l-.2.4a15 15 0 0 0-6 0l-.2-.4a16.5 16.5 0 0 0-4.07 1.23C2.1 9.1 1.4 12.8 1.75 16.45a16.6 16.6 0 0 0 5 2.5l1.07-1.74c-.58-.22-1.14-.5-1.66-.83l.4-.3a11.8 11.8 0 0 0 10.9 0l.4.3c-.53.33-1.08.6-1.67.83l1.07 1.74a16.6 16.6 0 0 0 5-2.5c.42-4.2-.7-7.87-2.9-11.12zM8.68 14.2c-.98 0-1.78-.9-1.78-2s.78-2 1.78-2 1.8.9 1.78 2c0 1.1-.78 2-1.78 2zm6.64 0c-.98 0-1.78-.9-1.78-2s.78-2 1.78-2 1.8.9 1.78 2c0 1.1-.78 2-1.78 2z", "steam": "M12 2a10 10 0 0 0-9.97 9.2l5.35 2.2a2.8 2.8 0 0 1 1.6-.5l2.38-3.45v-.05a3.8 3.8 0 1 1 3.8 3.8h-.09l-3.4 2.43a2.85 2.85 0 0 1-5.65.45L2.3 14.1A10 10 0 1 0 12 2zM7.55 17.6l-1.23-.5a2.1 2.1 0 1 0 1.1-2.8l1.27.52a1.55 1.55 0 1 1-1.14 2.78zM15.2 9.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z", "twitch": "M4 3 3 6.5V19h4.3v2.5H10L12.5 19H16l5-5V3H4zm15.3 10.3-2.8 2.8h-4.4l-2.4 2.4v-2.4H6.3V4.7h13v8.6zM16.6 7.6h-1.7v4.8h1.7V7.6zm-4.5 0h-1.7v4.8h1.7V7.6z", "youtube": "M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2C2 8.8 2 12 2 12s0 3.2.4 4.8a2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8C22 15.2 22 12 22 12s0-3.2-.4-4.8zM10 15V9l5.2 3L10 15z", "kick": "M3 3h5v5h2.5V5.5H13V3h5v5h-2.5v2.5H13V13h2.5v2.5H18V21h-5v-2.5h-2.5V16H8v5H3V3z", "tiktok": "M16.5 3c.3 2.4 1.7 3.9 4 4v3.2a7 7 0 0 1-4-1.3v6a6 6 0 1 1-6-6c.3 0 .6 0 .9.1v3.3a2.8 2.8 0 1 0 1.9 2.6V3h3.2z", "twitter": "M18.2 3h3l-6.6 7.5L22.4 21h-6l-4.8-6.2L6 21H3l7-8L2 3h6.2l4.3 5.7L18.2 3zm-1 16.2h1.7L7.3 4.7H5.5l11.700 14.500z", "github": "M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.600 9.600 0 0 1 5 0c1.900-1.300 2.800-1 2.800-1 .5 1.400.2 2.400.1 2.700.6.700 1 1.600 1 2.700 0 3.900-2.400 4.700-4.600 5 .4.300.7.900.7 1.800v2.700c0 .3.200.6.700.5A10 10 0 0 0 12 2z", "instagram": "M7.5 2h9A5.5 5.5 0 0 1 22 7.5v9a5.5 5.5 0 0 1-5.5 5.5h-9A5.5 5.5 0 0 1 2 16.5v-9A5.5 5.5 0 0 1 7.5 2zm0 2A3.500 3.500 0 0 0 4 7.5v9A3.500 3.500 0 0 0 7.5 20h9a3.500 3.500 0 0 0 3.500-3.500v-9A3.500 3.500 0 0 0 16.5 4h-9zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm5.300-3.300a1.200 1.200 0 1 1 0 2.400 1.200 1.200 0 0 1 0-2.400z", "spotify": "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm4.600 14.400a.6.6 0 0 1-.9.2c-2.400-1.500-5.400-1.800-8.900-1a.6.6 0 1 1-.3-1.200c3.800-.9 7.100-.5 9.800 1.100.3.200.4.600.3.900zm1.200-2.700a.8.8 0 0 1-1.100.3c-2.700-1.700-6.900-2.200-10.100-1.200a.8.8 0 0 1-.5-1.500c3.700-1.100 8.300-.6 11.400 1.300.4.200.5.700.3 1.100zm.1-2.800C14.700 9 9.500 8.800 6.500 9.700a1 1 0 1 1-.6-1.900c3.500-1 9.200-.9 12.800 1.300a1 1 0 0 1-.8 1.800z"};
+const logoFor = l => LOGOS[String(l).toLowerCase().replace(/[^a-z]/g, "").replace(/^x$/,"twitter")] || "";
+const markFor = l => MARKS[String(l).toLowerCase().replace(/[^a-z]/g, "")] || String(l).replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase() || "+";
+function safeUrl(u) {
+  u = String(u || "").trim();
+  if (!u) return "";
+  if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+  try { const x = new URL(u); return /^https?:$/.test(x.protocol) ? x.href : ""; } catch (e) { return ""; }
+}
+
+// ---- theme ----
+const PRESETS = { Neon: ["#0b0a12", "#ff5d8f", "#7c6cff"], Ocean: ["#06111a", "#2ec4ff", "#5b7cff"], Mint: ["#07130f", "#3ddc97", "#2ec4b6"], Sunset: ["#140a0a", "#ff8a3d", "#ff4d6d"], Mono: ["#0d0d0d", "#e6e6e6", "#8a8a8a"] };
+let curTheme = { bg: "#0b0a12", accent: "#ff5d8f", accent2: "#7c6cff" };
+const rgb = h => { const n = parseInt(String(h).replace("#", ""), 16) || 0; return ((n >> 16) & 255) + "," + ((n >> 8) & 255) + "," + (n & 255); };
+function applyTheme(t) {
+  curTheme = t;
+  const r = document.documentElement.style;
+  r.setProperty("--bg", t.bg); r.setProperty("--accent", t.accent); r.setProperty("--accent-2", t.accent2);
+  if (t.bg.toLowerCase() !== BUILTIN.bg) {
+    r.setProperty("--surface", "color-mix(in srgb, " + t.bg + ", white 6%)");
+    r.setProperty("--surface-2", "color-mix(in srgb, " + t.bg + ", white 10%)");
+    r.setProperty("--line", "color-mix(in srgb, " + t.bg + ", white 20%)");
+  } else { ["--surface", "--surface-2", "--line"].forEach(k => r.removeProperty(k)); }
+}
+const themeNow = () => ({ bg: val("bg") || BUILTIN.bg, accent: val("accent") || BUILTIN.accent, accent2: val("accent2") || BUILTIN.accent2 });
+
+function readUrl(blob) { return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => no(r.error); r.readAsDataURL(blob); }); }
+let sessionBg = "";
+function applyMedia(url, dim) {
+  let el = $("bgmedia");
+  if (!url) { if (el) el.remove(); return; }
+  const isVid = /^data:video|\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(url);
+  const tag = isVid ? "VIDEO" : "IMG";
+  if (el && el.tagName !== tag) { el.remove(); el = null; }
+  if (!el) {
+    el = document.createElement(tag.toLowerCase()); el.id = "bgmedia";
+    el.style.cssText = "position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none";
+    if (isVid) { el.preload = "auto"; el.disablePictureInPicture = true; el.muted = true; el.loop = true; el.autoplay = true; el.playsInline = true; }
+    else { el.alt = ""; el.decoding = "async"; }
+    el.addEventListener("error", () => {
+      let t = $("bgerr");
+      if (!t) { t = document.createElement("div"); t.id = "bgerr"; t.style.cssText = "position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:5;max-width:90%;padding:10px 14px;border-radius:12px;background:#2a1020;color:#ffd6e2;border:1px solid #ff5d8f;font:13px system-ui,sans-serif;text-align:center"; document.body.appendChild(t); }
+      t.textContent = "Background could not load: " + (el.getAttribute("src") || "").slice(0, 60) + ". The file is not on the site or is not a playable format (use .mp4 H.264, .webm, .jpg, .png or .gif).";
+      setTimeout(() => t.remove(), 9000);
+    });
+    document.body.prepend(el);
+  }
+  if (el.getAttribute("src") !== url) { el.src = url; if (isVid) el.play().catch(() => {}); }
+  el.style.filter = "brightness(" + (1 - dim / 100) + ")";
+  const n = (k, d) => { const v = val(k); return v === undefined || v === "" || isNaN(v) ? d : Number(v); };
+  const px = n("bgx", 50) + "% " + n("bgy", 50) + "%";
+  el.style.objectFit = "cover"; // always fill the screen: no black bars el.style.objectPosition = px; el.style.transformOrigin = px; el.style.transform = "scale(" + Math.max(1, n("bgzoom", 100) / 100) + ")";
+}
+let sessionBgType = "";
+
+// ---- profile frame + effect ----
+const fxStill = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const fx = $("fx"), fctx = fx.getContext("2d");
+let fxKind = "none", fxP = [], fxRaf = 0, fxW = 0, fxH = 0;
+const fxD = () => Math.min(devicePixelRatio || 1, 1.5);
+function fxFit() { const r = $("card").getBoundingClientRect(), d = fxD(); fxW = fx.width = Math.max(1, r.width * d); fxH = fx.height = Math.max(1, r.height * d); }
+function fxMake(init) {
+  const d = fxD(), k = fxKind;
+  const p = { x: Math.random() * fxW, y: init ? Math.random() * fxH : -10 * d, r: (Math.random() * 2 + 1) * d, ph: Math.random() * 6.28, c: Math.random() > .5 ? 1 : 0, vx: 0, vy: 0 };
+  if (k === "snow") { p.vy = (Math.random() * .5 + .3) * d; p.r *= 1.2; }
+  else if (k === "rain") { p.vy = (Math.random() * 4 + 5) * d; p.vx = -d; p.len = (Math.random() * 10 + 8) * d; }
+  else if (k === "embers") { if (!init) p.y = fxH + 10 * d; p.vy = -(Math.random() * .8 + .3) * d; }
+  else if (k === "hearts") { if (!init) p.y = fxH + 10 * d; p.vy = -(Math.random() * .6 + .3) * d; p.r = (Math.random() * 5 + 6) * d; }
+  else { p.y = Math.random() * fxH; p.r = (Math.random() * 2 + 1.5) * d; }
+  return p;
+}
+function fxDraw(t) {
+  fctx.clearRect(0, 0, fxW, fxH);
+  const A = rgb(curTheme.accent), B = rgb(curTheme.accent2), k = fxKind, d = fxD();
+  for (const p of fxP) {
+    const col = p.c ? A : B;
+    p.ph += .03;
+    p.y += p.vy; p.x += p.vx + (k === "snow" || k === "embers" || k === "hearts" ? Math.sin(p.ph) * .4 * d : 0);
+    if (k === "rain" || k === "snow") { if (p.y > fxH + 10 * d) { p.y = -10 * d; p.x = Math.random() * fxW; } if (p.x < -10) p.x = fxW; }
+    else if (k === "embers" || k === "hearts") { if (p.y < -12 * d) { p.y = fxH + 10 * d; p.x = Math.random() * fxW; } }
+    if (k === "rain") { fctx.strokeStyle = "rgba(" + col + ",.55)"; fctx.lineWidth = d; fctx.beginPath(); fctx.moveTo(p.x, p.y); fctx.lineTo(p.x + p.vx * 2, p.y - p.len); fctx.stroke(); }
+    else if (k === "snow") { fctx.fillStyle = "rgba(255,255,255,.8)"; fctx.beginPath(); fctx.arc(p.x, p.y, p.r, 0, 6.283); fctx.fill(); }
+    else if (k === "embers") { fctx.fillStyle = "rgba(" + col + ",.85)"; fctx.shadowColor = "rgb(" + col + ")"; fctx.shadowBlur = 8 * d; fctx.beginPath(); fctx.arc(p.x, p.y, p.r, 0, 6.283); fctx.fill(); fctx.shadowBlur = 0; }
+    else if (k === "hearts") { fctx.fillStyle = "rgba(" + A + ",.75)"; fctx.font = p.r * 2 + "px sans-serif"; fctx.textAlign = "center"; fctx.fillText("\u2665", p.x, p.y); }
+    else {
+      const a = (Math.sin(t / 400 + p.ph * 3) + 1) / 2, s = p.r * (.6 + a);
+      fctx.fillStyle = "rgba(" + col + "," + (.25 + a * .7) + ")"; fctx.shadowColor = "rgb(" + col + ")"; fctx.shadowBlur = 8 * d;
+      fctx.fillRect(p.x - s * 2.2, p.y - d * .5, s * 4.4, d); fctx.fillRect(p.x - d * .5, p.y - s * 2.2, d, s * 4.4);
+      fctx.beginPath(); fctx.arc(p.x, p.y, s * .6, 0, 6.283); fctx.fill(); fctx.shadowBlur = 0;
+    }
+  }
+}
+function setEffect(kind) {
+  kind = kind || "none";
+  if (kind === fxKind) return;
+  fxKind = kind; cancelAnimationFrame(fxRaf); fxRaf = 0; fxP = [];
+  fxFit(); fctx.clearRect(0, 0, fxW, fxH);
+  if (kind === "none") return;
+  for (let i = 0; i < 36; i++) fxP.push(fxMake(true));
+  if (fxStill) { fxDraw(0); return; }
+  const loop = t => { fxDraw(t); fxRaf = requestAnimationFrame(loop); };
+  fxRaf = requestAnimationFrame(loop);
+}
+function applyFrame(f) { $("card").className = "panel" + (f && f !== "none" ? " frame-" + f : ""); }
+addEventListener("resize", () => { if (fxKind !== "none") fxFit(); });
+
+// ---- render ----
+function cleanBio(t) {
+  return String(t).replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/https?:\/\/\S+|www\.\S+|discord\.gg\/\S+/gi, "").replace(/<a?:\w+:\d+>|<[@#!&]?\d+>/g, "").replace(/^\s*(?:#{1,3}|>{1,3}|-#)\s+/gm, "").replace(/[*_~`|]+/g, "").replace(/[ \t]+\n/g, "\n").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+}
+let bioFull = null, bioTimer = 0, bioWant = "", entered = false;
+function typeBio(text) {
+  const el = $("bio");
+  if (text === undefined) text = bioWant; else bioWant = text;
+  if (!entered || text === bioFull) return;
+  bioFull = text; clearTimeout(bioTimer); el.classList.remove("typing");
+  if (!text || matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = text; return; }
+  el.textContent = text; el.style.minHeight = ""; el.style.minHeight = el.offsetHeight + "px"; // reserve final height: no layout shifts while typing
+  el.textContent = ""; el.classList.add("typing");
+  const chars = Array.from(text); let i = 0, dir = 1;
+  const step = () => {
+    i += dir; el.textContent = chars.slice(0, i).join("");
+    if (dir === 1 && i >= chars.length) { dir = -1; bioTimer = setTimeout(step, 2800); }       // typed: hold, then erase
+    else if (dir === -1 && i <= 0) { dir = 1; bioTimer = setTimeout(step, 700); }              // empty: pause, type again
+    else bioTimer = setTimeout(step, dir === 1 ? 28 + Math.random() * 28 : 14);
+  };
+  step();
+}
+function render() {
+  applyTheme(themeNow());
+  applyMedia(sessionBg || val("bgmedia") || "", val("bgdim") === undefined ? 40 : Number(val("bgdim")));
+  const name = val("name") || "Your name";
+  $("name").textContent = name;
+  /* splash title removed */
+  $("avatarLetter").textContent = name.trim().charAt(0).toUpperCase() || "?";
+  $("handle").textContent = val("handle") || "";
+  $("rank").textContent = val("rank") || "";
+  const badge = val("badge");
+  $("pill").textContent = badge; $("pill").hidden = !badge;
+  typeBio(cleanBio((disc && disc.bio) || val("bio") || ""));
+  $("joined").textContent = val("joined") || "-";
+  document.title = name + " Profile";
+
+  const av = val("avatar");
+  if (av) { $("avatarImg").src = av; $("avatarImg").hidden = false; } else { $("avatarImg").hidden = true; }
+  renderActs();
+  applyFrame(val("frame")); setEffect(val("effect")); if (fxKind !== "none") fxFit();
+  const dc = val("decoration");
+  if (dc) { $("decoImg").src = dc; $("decoImg").hidden = false; } else { $("decoImg").hidden = true; }
+
+  const bn = val("banner");
+  const bEl = $("banner");
+  if (bn) { bEl.style.backgroundImage = 'url("' + bn + '")'; bEl.style.backgroundSize = "cover"; bEl.style.backgroundPosition = "center"; }
+  else { bEl.style.backgroundImage = ""; bEl.style.backgroundSize = ""; bEl.style.backgroundPosition = ""; }
+
+  const tiles = $("tiles");
+  tiles.textContent = "";
+  const list = (val("socials") || []).filter(s => s && (s.label || s.handle));
+  if (!list.length) {
+    const p = document.createElement("p"); p.className = "empty"; p.textContent = "No socials yet. Use Edit profile to add some.";
+    tiles.appendChild(p);
+  }
+  for (const s of list) {
+    const url = safeUrl(s.url);
+    const el = document.createElement(url ? "a" : "div");
+    el.className = "tile";
+    if (url) { el.href = url; el.target = "_blank"; el.rel = "noopener noreferrer"; }
+    const ico = document.createElement("span"); ico.className = "ico"; ico.setAttribute("aria-hidden", "true"); const lg = logoFor(s.label || s.handle);
+    if (lg) { const NS = "http://www.w3.org/2000/svg"; const sv = document.createElementNS(NS, "svg"); sv.setAttribute("viewBox", "0 0 24 24"); sv.setAttribute("width", "20"); sv.setAttribute("height", "20"); sv.setAttribute("fill", "currentColor"); const pa = document.createElementNS(NS, "path"); pa.setAttribute("d", lg); sv.appendChild(pa); ico.appendChild(sv); } else ico.textContent = markFor(s.label || s.handle);
+    const txt = document.createElement("span"); txt.className = "txt";
+    const sm = document.createElement("small"); sm.textContent = s.label || "";
+    const b = document.createElement("b"); b.textContent = s.handle || s.url || "";
+    txt.append(sm, b); el.append(ico, txt); tiles.appendChild(el);
+  }
+}
+render();
+
+// ---- views (counted per browser, first open shows 0) ----
+let views = Number(cget("profile-views-cache")) || 0;
+const showViews = () => { $("views").textContent = views.toLocaleString(); };
+if (!SYNC) {
+  try {
+    const key = "profile-views-v2";
+    views = parseInt(localStorage.getItem(key) || "-1", 10) + 1;
+    localStorage.setItem(key, String(views));
+  } catch (e) {}
+}
+showViews();
+
+// ---- cross-device sync (Supabase) ----
+const sb = (path, opt) => {
+  const headers = { apikey: SUPABASE_KEY, "Content-Type": "application/json" };
+  if (SUPABASE_KEY.startsWith("eyJ")) headers.Authorization = "Bearer " + SUPABASE_KEY; // old-style JWT keys only
+  return fetch(SUPABASE_URL + "/rest/v1/" + path, Object.assign({ headers }, opt));
+};
+async function loadRemote() {
+  try {
+    let counted = false;
+    try { counted = sessionStorage.getItem("counted") === "1"; } catch (e) {}
+    const bump = counted ? null : sb("rpc/bump_views", { method: "POST", body: "{}" }).then(r => { if (r.ok) { try { sessionStorage.setItem("counted", "1"); } catch (e) {} } }).catch(() => {});
+    const rows = await (await sb("profile?id=eq.1&select=data,views")).json();
+    if (bump) bump.then(async () => { try { const r2 = await (await sb("profile?id=eq.1&select=views")).json(); if (r2 && r2[0]) { views = Number(r2[0].views) || views; cset("profile-views-cache", views); showViews(); } } catch (e) {} });
+    if (rows && rows[0]) {
+      remote = rows[0].data || {};
+      views = Number(rows[0].views) || 0;
+      if (Object.keys(remote).length) { edits = {}; persist(); }
+      cset("profile-remote-cache", remote); cset("profile-views-cache", views);
+      showViews(); render(); applyMusic();
+    }
+  } catch (e) {}
+}
+if (SYNC) loadRemote();
+
+// ---- owner sign-in: only your Discord account can edit ----
+let session = null, unlocked = !SYNC;
+const SKEY = "profile-session";
+try { session = JSON.parse(localStorage.getItem(SKEY) || "null"); } catch (e) {}
+const saveSession = x => { session = x; try { if (x) localStorage.setItem(SKEY, JSON.stringify(x)); else localStorage.removeItem(SKEY); } catch (e) {} if (typeof showEditBtn === "function") showEditBtn(); };
+const showEditBtn = () => { $("editBtn").hidden = !(unlocked || session); $("editBtn").classList.toggle("locked", !unlocked); $("loginBtn").hidden = !!(unlocked || session); };
+showEditBtn();
+const authHeaders = t => ({ apikey: SUPABASE_KEY, "Content-Type": "application/json", Authorization: "Bearer " + t });
+function jwtExp(t) { try { return JSON.parse(atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).exp * 1000; } catch (e) { return 0; } }
+async function freshToken() {
+  if (!session || !session.access) return null;
+  if (jwtExp(session.access) > Date.now() + 60000) return session.access;
+  try {
+    const r = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" }, body: JSON.stringify({ refresh_token: session.refresh }) });
+    const j = await r.json();
+    if (j.access_token) { saveSession({ access: j.access_token, refresh: j.refresh_token, ptoken: session.ptoken }); return j.access_token; }
+    if (r.status >= 400 && r.status < 500) saveSession(null);
+  } catch (e) {}
+  return null;
+}
+async function isOwner() {
+  const t = await freshToken(); if (!t) return false;
+  try { const r = await fetch(SUPABASE_URL + "/rest/v1/rpc/is_owner", { method: "POST", headers: authHeaders(t), body: "{}" }); return (await r.json()) === true; }
+  catch (e) { return null; }
+}
+async function authedSave(data) {
+  const t = await freshToken(); if (!t) return false;
+  const r = await fetch(SUPABASE_URL + "/rest/v1/rpc/save_profile", { method: "POST", headers: authHeaders(t), body: JSON.stringify({ d: data }) });
+  return (await r.json()) === true;
+}
+// true = in your server, false = not in it, null = Discord needs you to sign in again
+async function inServer() {
+  if (!DISCORD_SERVER_ID) return true;
+  if (!session || !session.ptoken) return null;
+  try {
+    const r = await fetch("https://discord.com/api/v10/users/@me/guilds", { headers: { Authorization: "Bearer " + session.ptoken } });
+    if (r.status === 401) return null;
+    const j = await r.json();
+    return Array.isArray(j) ? j.some(g => g.id === DISCORD_SERVER_ID) : null;
+  } catch (e) { return null; }
+}
+function signOut() { saveSession(null); unlocked = false; showEditBtn(); }
+// Coming back from Discord: the sign-in details are in the address.
+let linkError = "";
+(function takeLink() {
+  const h = location.hash;
+  if (!SYNC || !/access_token=|error_description=/.test(h)) return;
+  const q = new URLSearchParams(h.slice(1));
+  if (q.get("access_token")) saveSession({ access: q.get("access_token"), refresh: q.get("refresh_token"), ptoken: q.get("provider_token") || "" });
+  else linkError = (q.get("error_description") || "That link did not work.").replace(/\+/g, " ");
+  history.replaceState(null, "", location.pathname + location.search);
+})();
+if (SYNC && session) (async () => {
+  const ok = await isOwner();
+  if (ok === false) { saveSession(null); linkError = "This Discord account is not allowed to edit this profile."; openLock(); return; }
+  if (!ok) return;
+  const m = await inServer();
+  if (m === true) { unlocked = true; showEditBtn(); }
+  else if (m === false) { linkError = "You are not in the Discord server, so editing is turned off. Join it again and reload."; openLock(); }
+  else { linkError = "Please sign in with Discord again."; openLock(); }
+})();
+function openLock() {}
+function signInDiscord() {
+  location.href = SUPABASE_URL + "/auth/v1/authorize?provider=discord&scopes=guilds&redirect_to=" + encodeURIComponent(location.origin + location.pathname);
+}
+$("signOutBtn").addEventListener("click", () => { signOut(); closeEditor(); });
+if (linkError) openLock();
+
+// ---- editor ----
+let draftSocials = [], avatarDraft = "", bannerDraft = "", decoDraft = "", resetArmed = false;
+const say = t => { $("status").textContent = t; };
+
+function previewImgs() {
+  const a = $("avatarPrev"), b = $("bannerPrev");
+  if (avatarDraft) { a.src = avatarDraft; a.hidden = false; } else a.hidden = true;
+  if (bannerDraft) { b.src = bannerDraft; b.hidden = false; } else b.hidden = true;
+  const d = $("decoPrev");
+  if (decoDraft) { d.src = decoDraft; d.hidden = false; } else d.hidden = true;
+}
+function buildRows() {
+  const wrap = $("srows");
+  wrap.textContent = "";
+  draftSocials.forEach((s, i) => {
+    const row = document.createElement("div"); row.className = "srow";
+    const mk = (ph, v, cls, field, list) => {
+      const inp = document.createElement("input"); inp.type = "text"; inp.placeholder = ph; inp.value = v || ""; inp.maxLength = 200;
+      if (cls) inp.className = cls; if (list) inp.setAttribute("list", list);
+      inp.setAttribute("aria-label", ph);
+      inp.addEventListener("input", () => { draftSocials[i][field] = inp.value; });
+      return inp;
+    };
+    const rm = document.createElement("button"); rm.type = "button"; rm.className = "btn small"; rm.textContent = "Remove";
+    rm.addEventListener("click", () => { draftSocials.splice(i, 1); buildRows(); });
+    row.append(mk("Platform", s.label, "", "label", "platforms"), mk("Handle", s.handle, "", "handle"), rm, mk("Link (https://...)", s.url, "url", "url"));
+    wrap.appendChild(row);
+  });
+}
+function openEditor() {
+  showTab("overview"); fillOverview();
+  $("f_name").value = val("name") || "";
+  $("f_handle").value = val("handle") || "";
+  $("f_rank").value = val("rank") || "";
+  $("f_badge").value = val("badge") || "";
+  $("f_bio").value = val("bio") || "";
+  $("f_joined").value = val("joined") || "";
+  const th = themeNow(); $("f_bg").value = th.bg; $("f_accent").value = th.accent; $("f_accent2").value = th.accent2;
+  bgDraft = sessionBg || val("bgmedia") || "";
+  $("f_dim").value = val("bgdim") === undefined ? 40 : val("bgdim"); $("dimVal").textContent = $("f_dim").value;
+  draftSocials = (val("socials") || []).map(s => ({ label: s.label || "", handle: s.handle || "", url: s.url || "" }));
+  avatarDraft = val("avatar") || ""; bannerDraft = val("banner") || "";
+  decoDraft = val("decoration") || "";
+  $("f_act").checked = val("showActivity") !== false;
+  $("f_frame").value = val("frame") || "none"; $("f_effect").value = val("effect") || "none";
+  resetArmed = false; $("resetBtn").textContent = "Reset to defaults";
+  $("exportBox").hidden = true; say("");
+  buildRows(); previewImgs();
+  $("scrim").hidden = false; $("editor").hidden = false;
+  $("f_name").focus();
+}
+const liveTheme = () => applyTheme({ bg: $("f_bg").value, accent: $("f_accent").value, accent2: $("f_accent2").value });
+["f_bg", "f_accent", "f_accent2"].forEach(id => $(id).addEventListener("input", liveTheme));
+for (const [n, c] of Object.entries(PRESETS)) {
+  const b = document.createElement("button"); b.type = "button"; b.className = "btn small"; b.textContent = n;
+  b.addEventListener("click", () => { $("f_bg").value = c[0]; $("f_accent").value = c[1]; $("f_accent2").value = c[2]; liveTheme(); });
+  $("presets").appendChild(b);
+}
+let bgDraft = "", bgBlobDraft = null;
+const liveBg = () => { $("dimVal").textContent = $("f_dim").value; applyMedia(bgDraft, Number($("f_dim").value)); };
+$("f_dim").addEventListener("input", liveBg);
+$("bgClear").addEventListener("click", () => { bgDraft = ""; bgBlobDraft = null; sessionBg = ""; liveBg(); });
+$("bgFile").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const h = new Uint8Array(await f.slice(0, 16).arrayBuffer());
+    const txt = String.fromCharCode(...h);
+    const gif = txt.startsWith("GIF8");
+    const video = f.type.startsWith("video/") || txt.slice(4, 8) === "ftyp" || (h[0] === 0x1A && h[1] === 0x45 && h[2] === 0xDF && h[3] === 0xA3) || /\.(mp4|webm|mov|m4v|ogv)$/i.test(f.name);
+    if (video || gif) {
+      // GIFs and videos are kept as files (no size limit).
+      const mime = gif ? "image/gif" : (f.type.startsWith("video/") ? f.type : (h[0] === 0x1A ? "video/webm" : "video/mp4"));
+      bgBlobDraft = new Blob([f], { type: mime }); bgDraft = await readUrl(bgBlobDraft); sessionBgType = video ? "video" : "image";
+      say("Press Save to keep it.");
+    } else {
+      bgBlobDraft = null; bgDraft = await coverImage(f, 1600, 900, .8); sessionBgType = ""; say("");
+    }
+    liveBg();
+  } catch (x) { say("That file could not be used."); }
+});
+function showTab(n) {
+  document.querySelectorAll(".ed-body .tab").forEach(t => { t.hidden = t.dataset.tab !== n; });
+  document.querySelectorAll(".ed-nav button").forEach(b => b.classList.toggle("on", b.dataset.go === n));
+  $("edBody").scrollTop = 0;
+}
+function fillOverview() {
+  $("ovViews").textContent = $("views").textContent;
+  $("ovStatus").textContent = ({ online: "Online", idle: "Idle", dnd: "Do not disturb" })[$("dot").dataset.status] || "Offline";
+  $("ovJoined").textContent = val("joined") || "-";
+  const t = document.querySelector("#acts .act b");
+  $("ovAct").textContent = t ? t.textContent : "Nothing right now";
+  $("acctName").textContent = (disc && disc.handle) || "your Discord account";
+}
+document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => showTab(b.dataset.go)));
+function closeEditor() { render(); $("editor").hidden = true; $("scrim").hidden = true; $("editBtn").focus(); }
+$("editBtn").addEventListener("click", () => { openDash(); });
+$("edClose").addEventListener("click", closeEditor);
+$("scrim").addEventListener("click", closeEditor);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("editor").hidden) closeEditor(); });
+$("addSocial").addEventListener("click", () => { draftSocials.push({ label: "", handle: "", url: "" }); buildRows(); });
+
+function coverImage(file, w, h, q) {
+  return readUrl(file).then(src => new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      const k = Math.max(w / img.width, h / img.height), dw = img.width * k, dh = img.height * k;
+      c.getContext("2d").drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+      resolve(c.toDataURL("image/jpeg", q));
+    };
+    img.onerror = () => reject(new Error("bad image"));
+    img.src = src;
+  }));
+}
+$("avatarFile").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  try { avatarDraft = await coverImage(f, 256, 256, .9); previewImgs(); say(""); } catch (x) { say("That file could not be read as an image."); }
+  e.target.value = "";
+});
+$("bannerFile").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0]; if (!f) return;
+  try { bannerDraft = await coverImage(f, 900, 270, .85); previewImgs(); say(""); } catch (x) { say("That file could not be read as an image."); }
+  e.target.value = "";
+});
+$("avatarClear").addEventListener("click", () => { avatarDraft = ""; previewImgs(); });
+$("bannerClear").addEventListener("click", () => { bannerDraft = ""; previewImgs(); });
+function useDiscord(key, set, what) {
+  const v = disc && disc[key];
+  if (v) { set(v); previewImgs(); say(""); } else say("No " + what + " found on your Discord account.");
+}
+$("bannerUse").addEventListener("click", () => useDiscord("banner", v => { bannerDraft = v; }, "banner"));
+$("decoUse").addEventListener("click", () => useDiscord("decoration", v => { decoDraft = v; }, "avatar decoration"));
+$("decoClear").addEventListener("click", () => { decoDraft = ""; previewImgs(); });
+$("f_frame").addEventListener("change", e => applyFrame(e.target.value));
+$("f_effect").addEventListener("change", e => setEffect(e.target.value));
+
+$("saveBtn").addEventListener("click", () => {
+  const next = {
+    name: $("f_name").value.trim(), handle: $("f_handle").value.trim(), rank: $("f_rank").value.trim(),
+    badge: $("f_badge").value.trim(), bio: $("f_bio").value.trim(), joined: $("f_joined").value.trim(),
+    avatar: avatarDraft, banner: bannerDraft, decoration: decoDraft, frame: $("f_frame").value, showActivity: $("f_act").checked, effect: $("f_effect").value,
+    bgmedia: (bgBlobDraft || (sessionBg && bgDraft === sessionBg)) ? val("bgmedia") : bgDraft, bgdim: Number($("f_dim").value),
+    bg: $("f_bg").value, accent: $("f_accent").value, accent2: $("f_accent2").value,
+    socials: draftSocials.map(s => ({ label: s.label.trim(), handle: s.handle.trim(), url: s.url.trim() })).filter(s => s.label || s.handle || s.url)
+  };
+  if (SYNC) {
+    say("Saving...");
+    inServer().then(m => m === true ? authedSave(next) : (m === false ? "notmember" : "relogin"))
+      .then(ok => {
+        if (ok === true) {
+          remote = next; edits = {}; persist();
+          const fromFile2 = !!bgBlobDraft || (sessionBg && bgDraft === sessionBg);
+          sessionBg = fromFile2 ? bgDraft : "";
+          if (fromFile2) { if (bgBlobDraft) idbSet("bg", { blob: bgBlobDraft, type: sessionBgType }); } else idbDel("bg");
+          bgBlobDraft = null;
+          render(); closeEditor();
+        } else if (ok === "notmember") {
+          unlocked = false; showEditBtn(); say("You are not in the Discord server, so editing is turned off.");
+        } else if (ok === "relogin") {
+          unlocked = false; showEditBtn(); say("Please sign in with Discord again: tap your avatar 5 times.");
+        } else {
+          signOut(); say("Save refused. Tap your avatar 5 times and sign in again.");
+        }
+      })
+      .catch(() => say("Could not reach the server. Try again."));
+    return;
+  }
+  edits = {};
+  const b = base();
+  for (const k of Object.keys(next)) if (JSON.stringify(next[k]) !== JSON.stringify(b[k])) edits[k] = next[k];
+  const fromFile = !!bgBlobDraft || (sessionBg && bgDraft === sessionBg);
+  sessionBg = fromFile ? bgDraft : "";
+  if (fromFile) { if (bgBlobDraft) idbSet("bg", { blob: bgBlobDraft, type: sessionBgType }); } else idbDel("bg");
+  bgBlobDraft = null;
+  const ok = persist();
+  render();
+  if (ok) closeEditor(); else say("Could not save in this browser. Try smaller images.");
+});
+$("resetBtn").addEventListener("click", () => {
+  if (!resetArmed) { resetArmed = true; $("resetBtn").textContent = "Click again to reset"; return; }
+  edits = {}; persist(); render(); closeEditor();
+});
+$("copyBtn").addEventListener("click", async () => {
+  const out = {}; for (const k of Object.keys(BUILTIN)) out[k] = val(k);
+  const text = JSON.stringify(out, null, 2);
+  const box = $("exportBox"); box.value = text;
+  try { await navigator.clipboard.writeText(text); say("Settings copied."); box.hidden = true; }
+  catch (e) { box.hidden = false; box.focus(); box.select(); say("Copy the text below."); }
+});
+
+// ---- connect Discord profile (via Lanyard) ----
+// Fills name, @username, avatar and status from your Discord account.
+let dws, dhb, dretry = 1000, extras = {}, extrasTried = false;
+
+// ---- activity cards (what you are playing / listening to) ----
+const VERBS = ["Playing", "Streaming", "Listening to", "Watching", "", "Competing in"];
+function actImg(a) {
+  const im = a.assets && a.assets.large_image;
+  if (!im) return "";
+  if (im.startsWith("mp:")) return "https://media.discordapp.net/" + im.slice(3);
+  return a.application_id ? "https://cdn.discordapp.com/app-assets/" + a.application_id + "/" + im + ".png" : "";
+}
+// Game logo: when the activity has no artwork, use the game's Discord app icon.
+const iconCache = {};
+let detectP = null;
+// Discord's public list of detected games/apps (name -> icon). Loaded once, only when a game has no icon of its own.
+const detectable = () => detectP || (detectP = fetch("https://discord.com/api/v9/applications/detectable").then(r => r.json()).then(list => {
+  const m = {};
+  for (const g of list) { const names = [g.name].concat(g.aliases || []); for (const n of names) if (n) m[String(n).toLowerCase()] = g; }
+  return m;
+}).catch(() => ({})));
+const iconUrl = (id, hash) => hash ? "https://cdn.discordapp.com/app-icons/" + id + "/" + hash + ".png?size=128" : "";
+const appIcon = (id, name) => {
+  const key = "appicon2-" + (id || "n:" + String(name || "").toLowerCase());
+  if (iconCache[key] !== undefined) return Promise.resolve(iconCache[key]);
+  let c = null; try { c = localStorage.getItem(key); } catch (e) {}
+  if (c) return Promise.resolve(iconCache[key] = c);
+  const byId = id ? fetch("https://discord.com/api/v10/applications/" + id + "/rpc").then(r => r.json()).then(j => iconUrl(id, j && j.icon)).catch(() => "") : Promise.resolve("");
+  const probe = u => new Promise(ok => { const i = new Image(); i.onload = () => ok(u); i.onerror = () => ok(""); i.src = u; });
+  // last resort: a plain white logo from the Simple Icons set, matched by the game/app name (no cross-site permission needed for pictures)
+  const simple = async () => {
+    const base = String(name || "").toLowerCase().replace(/\+/g, "plus").replace(/[^a-z0-9]/g, "");
+    for (const slug of [base, base.replace(/\d+$/, ""), base.replace(/(game|launcher|client|app)$/, "")]) {
+      if (!slug) continue;
+      const u = await probe("https://cdn.simpleicons.org/" + slug + "/ffffff");
+      if (u) return u;
+    }
+    return "";
+  };
+  return byId.then(u => u || (name ? detectable().then(m => { const g = m[String(name).toLowerCase()]; return g ? iconUrl(g.id, g.icon) : ""; }).catch(() => "") : "")).then(u => u || simple()).then(u => {
+    iconCache[key] = u; if (u) { try { localStorage.setItem(key, u); } catch (e) {} } return u;
+  });
+};
+function elapsed(ms) {
+  const t = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(sec).padStart(2, "0");
+}
+function renderActs() {
+  const box = $("acts"); box.textContent = "";
+  const d = lastPresence;
+  if (!d || val("showActivity") === false) return;
+  const items = [];
+  if (d.listening_to_spotify && d.spotify) {
+    const sp = d.spotify;
+    items.push({ verb: "Listening to Spotify", title: sp.song, l1: String(sp.artist || "").replace(/;\s*/g, ", "), l2: sp.album, img: sp.album_art_url, start: sp.timestamps && sp.timestamps.start });
+  }
+  for (const a of d.activities || []) {
+    if (a.type === 4 || (a.type === 2 && a.name === "Spotify")) continue;
+    items.push({ verb: VERBS[a.type] || "Playing", title: a.name, l1: a.details, l2: a.state, img: actImg(a), appId: a.application_id, start: a.timestamps && a.timestamps.start });
+  }
+  for (const it of items) {
+    const el = document.createElement("div"); el.className = "panel act";
+    let im;
+    if (it.img) { im = document.createElement("img"); im.alt = ""; im.src = it.img; im.addEventListener("error", () => { const ph = document.createElement("div"); ph.className = "ph"; ph.textContent = (it.title || "?").slice(0, 2).toUpperCase(); im.replaceWith(ph); }); }
+    else {
+      im = document.createElement("div"); im.className = "ph"; im.textContent = String(it.title || "?").slice(0, 2).toUpperCase();
+      if (it.appId || it.title) appIcon(it.appId, it.title).then(u => {
+        if (!u || !im.isConnected) return;
+        const g = document.createElement("img"); g.alt = ""; g.src = u;
+        g.addEventListener("load", () => { if (im.isConnected) im.replaceWith(g); });
+      });
+    }
+    const tx = document.createElement("div"); tx.className = "tx";
+    const sm = document.createElement("small"); sm.textContent = it.verb;
+    const b = document.createElement("b"); b.textContent = it.title || "";
+    tx.append(sm, b);
+    for (const t of [it.l1, it.l2]) if (t) { const sp = document.createElement("span"); sp.className = "l"; sp.textContent = t; tx.appendChild(sp); }
+    if (it.start) { const tm = document.createElement("span"); tm.className = "l"; tm.dataset.start = it.start; tm.textContent = elapsed(Date.now() - it.start) + " elapsed"; tx.appendChild(tm); }
+    el.append(im, tx); box.appendChild(el);
+  }
+}
+setInterval(() => document.querySelectorAll("#acts [data-start]").forEach(e => { e.textContent = elapsed(Date.now() - Number(e.dataset.start)) + " elapsed"; }), 1000);
+const DECO = a => "https://cdn.discordapp.com/avatar-decoration-presets/" + a + ".png?size=160&passthrough=true";
+const BANNER = (id, h) => "https://cdn.discordapp.com/banners/" + id + "/" + h + "." + (h.startsWith("a_") ? "gif" : "png") + "?size=600";
+// Banner and decoration are not always in the live status feed, so ask a public profile service too.
+async function fetchExtras(id) {
+  try {
+    const j = await (await fetch("https://dcdn.dstn.to/profile/" + id)).json();
+    const u = j && j.user; if (!u) return;
+    const e = {};
+    const bio = j.user_profile && j.user_profile.bio;
+    if (bio) e.bio = bio.trim();
+    if (u.banner) e.banner = BANNER(id, u.banner);
+    if (u.avatar_decoration_data && u.avatar_decoration_data.asset) e.decoration = DECO(u.avatar_decoration_data.asset);
+    extras = e;
+    disc = Object.assign({}, e, disc || {});
+    cset("profile-disc-cache", disc);
+    render();
+  } catch (x) {}
+}
+function applyDiscord(d) {
+  const u = d && d.discord_user;
+  if (!u) return;
+  lastPresence = d;
+  disc = Object.assign({}, extras, { name: u.global_name || u.display_name || u.username, handle: "@" + u.username });
+  const dd = u.avatar_decoration_data;
+  if (dd && dd.asset) disc.decoration = DECO(dd.asset);
+  if (u.banner) disc.banner = BANNER(u.id, u.banner);
+  if (u.avatar) disc.avatar = "https://cdn.discordapp.com/avatars/" + u.id + "/" + u.avatar + "." + (u.avatar.startsWith("a_") ? "gif" : "png") + "?size=256";
+  cset("profile-disc-cache", disc);
+  $("dot").dataset.status = d.discord_status || "offline";
+  $("dot").hidden = false;
+  render();
+  if (!extrasTried) { extrasTried = true; fetchExtras(u.id); }
+}
+function connectDiscord() {
+  if (!DISCORD_ID) return;
+  try { dws = new WebSocket("wss://api.lanyard.rest/socket"); } catch (e) { return; }
+  dws.onmessage = ev => {
+    const m = JSON.parse(ev.data);
+    if (m.op === 1) {
+      dws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: DISCORD_ID } }));
+      clearInterval(dhb);
+      dhb = setInterval(() => dws.readyState === 1 && dws.send(JSON.stringify({ op: 3 })), m.d.heartbeat_interval);
+      dretry = 1000;
+    } else if (m.op === 0) { applyDiscord(m.d); }
+  };
+  dws.onclose = () => { clearInterval(dhb); setTimeout(connectDiscord, dretry = Math.min(dretry * 2, 30000)); };
+  dws.onerror = () => dws.close();
+}
+connectDiscord();
+
+// ---- animated backdrop ----
+const cv = $("bg"), ctx = cv.getContext("2d");
+const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let W, H, dots = [];
+function resize() {
+  const d = .5; // low-res backdrop (soft glow + tiny dots): ~16x less memory than full-res
+  W = cv.width = Math.round(innerWidth * d); H = cv.height = Math.round(innerHeight * d);
+  dots = Array.from({ length: Math.round(innerWidth / 14) }, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    r: (Math.random() * 1.6 + .6) * d * 1.4, v: (Math.random() * .25 + .05) * d,
+    k: Math.random() > .5 ? 1 : 0
+  }));
+}
+let bgCache = null, bgKey = "", lastT = 0;
+function frame(t) {
+  if (!still) requestAnimationFrame(frame);
+  if (t - lastT < 30 && t) return; lastT = t;
+  if (bgKey && !entered) return; // keep the blurred splash static: no re-blur every frame
+  const T = curTheme, A = rgb(T.accent), B = rgb(T.accent2), hasMedia = !!$("bgmedia");
+  const key = [W, H, T.bg, T.accent, T.accent2, hasMedia].join("|");
+  if (key !== bgKey) {
+    bgKey = key; bgCache = document.createElement("canvas"); bgCache.width = W; bgCache.height = H;
+    const c = bgCache.getContext("2d");
+    if (!hasMedia) {
+      c.fillStyle = T.bg; c.fillRect(0, 0, W, H);
+      const g1 = c.createRadialGradient(W * .25, H * .3, 0, W * .25, H * .3, Math.max(W, H) * .6);
+      g1.addColorStop(0, "rgba(" + A + ",.22)"); g1.addColorStop(1, "rgba(" + A + ",0)"); c.fillStyle = g1; c.fillRect(0, 0, W, H);
+      const g2 = c.createRadialGradient(W * .78, H * .75, 0, W * .78, H * .75, Math.max(W, H) * .6);
+      g2.addColorStop(0, "rgba(" + B + ",.24)"); g2.addColorStop(1, "rgba(" + B + ",0)"); c.fillStyle = g2; c.fillRect(0, 0, W, H);
+    }
+  }
+  ctx.clearRect(0, 0, W, H);
+  if (!hasMedia) ctx.drawImage(bgCache, 0, 0);
+  for (const p of dots) {
+    p.y -= p.v * 1.6; if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; }
+    ctx.fillStyle = "rgba(" + (p.k ? A : B) + ",.7)";
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+  }
+}
+resize(); addEventListener("resize", () => { resize(); if (still) frame(0); });
+frame(0);
+
+// ---- music: appears only when an mp3 is chosen ----
+const audio = new Audio();
+audio.preload = "auto";
+let objectUrl = null;
+const PLAY = "M3 1.5v13l11-6.5z", PAUSE = "M3 1.5h3.5v13H3zM9.5 1.5H13v13H9.5z";
+const fmt = s => isFinite(s) ? Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0") : "0:00";
+function showPlayer(title) {
+  $("trackName").textContent = title;
+  $("player").hidden = false;
+}
+function setIcon(p) {
+  $("playIcon").setAttribute("d", p ? PAUSE : PLAY);
+  $("play").setAttribute("aria-label", p ? "Pause music" : "Play music");
+}
+// Keep the chosen song in this browser so it is still there after a refresh.
+function idb() {
+  return new Promise((ok, no) => {
+    try {
+      const r = indexedDB.open("profile-media", 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("files");
+      r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+    } catch (e) { no(e); }
+  });
+}
+async function idbSet(k, v) { try { const d = await idb(); d.transaction("files", "readwrite").objectStore("files").put(v, k); } catch (e) {} }
+async function idbDel(k) { try { const d = await idb(); d.transaction("files", "readwrite").objectStore("files").delete(k); } catch (e) {} }
+async function idbGet(k) { try { const d = await idb(); return await new Promise(ok => { const q = d.transaction("files").objectStore("files").get(k); q.onsuccess = () => ok(q.result); q.onerror = () => ok(null); }); } catch (e) { return null; } }
+idbGet("bg").then(m => {
+  if (!m || !m.blob || sessionBg || val("bgmedia")) return;
+  sessionBgType = m.type || "video"; readUrl(m.blob).then(u => { if (!sessionBg) { sessionBg = u; render(); } });
+});
+// Music comes from the dashboard (saved link), or MUSIC_URL above.
+function applyMusic() {
+  let u = String(base().music || MUSIC_URL || "").trim();
+  u = /^data:audio\//.test(u) || (/^[\w\-./%]+$/.test(u) && !/^https?:/i.test(u)) ? u : safeUrl(u);
+  if (!u) { audio.pause(); audio.removeAttribute("src"); delete audio.dataset.src; $("player").hidden = true; return; }
+  const t = base().musicTitle || (u.startsWith("data:") ? "Song" : decodeURIComponent(u.split("?")[0].split("/").pop().replace(/\.[^.]+$/, "")));
+  if (audio.dataset.src !== u) {
+    audio.dataset.src = u; audio.src = u;
+    if ($("splash").classList.contains("gone")) audio.play().catch(() => {});
+  }
+  showPlayer(t);
+}
+applyMusic();
+$("play").addEventListener("click", () => { if (audio.paused) audio.play().catch(() => {}); else audio.pause(); });
+audio.addEventListener("play", () => setIcon(true));
+audio.addEventListener("pause", () => setIcon(false));
+audio.addEventListener("ended", () => { audio.currentTime = 0; audio.play().catch(() => {}); });
+audio.addEventListener("timeupdate", () => {
+  $("time").textContent = fmt(audio.currentTime);
+  if (audio.duration) $("prog").style.width = (audio.currentTime / audio.duration * 100) + "%";
+});
+$("bar").addEventListener("click", e => {
+  if (!audio.duration) return;
+  const r = $("bar").getBoundingClientRect();
+  audio.currentTime = (e.clientX - r.left) / r.width * audio.duration;
+});
+
+// ---- splash ----
+function enter() {
+  $("splash").classList.add("gone");
+  entered = true; typeBio();
+  if (audio.src && audio.paused) audio.play().catch(() => {});
+}
+$("splash").addEventListener("click", enter);
+$("splash").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); enter(); } });
+
+// ---- dashboard overlay (login + editor live in the iframe above) ----
+let dashFrame = null;
+function openDash() {
+  if (!dashFrame) {
+    dashFrame = $("dashFrame");
+    dashFrame.srcdoc = $("dashTpl").textContent.split("<\\/script>").join("<" + "/script>");
+  }
+  dashFrame.hidden = false;
+  document.documentElement.style.overflow = "hidden";
+  try { localStorage.removeItem("dash-want"); } catch (e) {}
+}
+function closeDash(saved) {
+  if (saved) { location.reload(); return; }
+  dashFrame.hidden = true;
+  document.documentElement.style.overflow = "";
+}
+(function () {
+  let w = false;
+  try { w = localStorage.getItem("dash-want") === "1"; } catch (e) {}
+  if (w || /access_token=|error_description=/.test(window.__h || "")) openDash();
+})();
+</script>
+
+<div id="heart" aria-hidden="true"><span>&lt;$</span></div>
+<script>
+(() => {
+  const h = document.getElementById("heart");
+  if (!h || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+  // Fallback: DOM cursor, used only until the real (OS-drawn) cursor image is ready or if it fails.
+  const move = e => { h.style.transform = "translate3d(" + e.clientX + "px," + e.clientY + "px,0)"; if (!h.classList.contains("on")) h.classList.add("on"); };
+  addEventListener("pointermove", move, { passive: true });
+  document.documentElement.addEventListener("pointerleave", () => h.classList.remove("on"));
+  // Real cursor: the <$ is drawn once into an image and handed to the browser as the CSS cursor,
+  // so the OS moves it with the mouse. Page load/animation can no longer make it lag.
+  const make = (k, a) => {
+    const c = document.createElement("canvas"), W = 48, H = 32;
+    c.width = W * k; c.height = H * k;
+    const x = c.getContext("2d"); x.scale(k, k);
+    x.font = '800 20px Syne, "DM Sans", system-ui, sans-serif'; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillStyle = "#fff"; x.globalAlpha = a;
+    x.shadowColor = "rgba(255,255,255,.9)"; x.shadowBlur = 7; x.fillText("<$", W / 2, H / 2);
+    x.shadowColor = "rgba(255,255,255,.5)"; x.shadowBlur = 16; x.fillText("<$", W / 2, H / 2);
+    return c.toDataURL("image/png");
+  };
+  const css = (u1, u2) => { const v = "image-set(url(" + u1 + ") 1x, url(" + u2 + ") 2x) 24 16, auto"; return "html, html * { cursor: -webkit-" + v + " !important; cursor: " + v + " !important; }"; };
+  // same pulse as the splash <$ (1.4s, fades 100% -> 15% -> 100%, glow fades with it), as a set of frames
+  const N = 12;
+  let frames = [], st, f = 0;
+  const build = () => { frames = []; for (let i = 0; i < N; i++) { const a = .4 + .6 * (.5 + .5 * Math.cos(2 * Math.PI * i / N)); frames.push([make(1, a), make(2, a)]); } };
+  const paint = () => { st.textContent = css.apply(null, frames[f]); };
+  try {
+    build();                                   // instant: drawn now with whatever font is available
+    st = document.createElement("style"); document.head.appendChild(st); paint(); h.remove();
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(() => { f = (f + 1) % N; paint(); }, 1400 / N);
+    // once the real font has loaded, redraw the same cursor with it (no visible gap)
+    if (document.fonts && document.fonts.load) document.fonts.load('800 20px Syne').then(() => { build(); paint(); }, () => {});
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
