@@ -48,7 +48,7 @@ body {
   padding-block: 48px;
   overflow-x: hidden;
 }
-#bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
+#bg { position: fixed; left: 0; top: 0; width: 100vw; height: 100%; height: 100lvh; z-index: 0; display: block; }
 .shade { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse at 50% 35%, transparent 0%, rgba(11,10,18,.8) 90%); pointer-events: none; }
 
 .layout { position: relative; z-index: 1; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 16px; }
@@ -1166,7 +1166,7 @@ function applyMedia(url, dim) {
   if (el && el.tagName !== tag) { el.remove(); el = null; }
   if (!el) {
     el = document.createElement(tag.toLowerCase()); el.id = "bgmedia";
-    el.style.cssText = "position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none";
+    el.style.cssText = "position:fixed;left:0;top:0;width:100vw;height:100%;height:100lvh;object-fit:cover;z-index:0;pointer-events:none;background:#000";
     if (isVid) { el.preload = "auto"; el.disablePictureInPicture = true; el.muted = true; el.loop = true; el.autoplay = true; el.playsInline = true; }
     else { el.alt = ""; el.decoding = "async"; }
     el.addEventListener("error", () => {
